@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.ensayotratamientoagro.app-mergeDebugResources-54:/values-v24/values-v24.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Patricio Arias\\.gradle\\caches\\8.9\\transforms\\25a0b4ecdfc308fa86a0e56712471d41\\transformed\\appcompat-1.1.0\\res\\values-v24\\values-v24.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,212",
+                        "endColumns": "156,134",
+                        "endOffsets": "207,342"
+                    }
+                }
+            ]
+        }
+    ]
+}

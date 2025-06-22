@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "714352450375",
+    "project_id": "gestion-y-control-agro",
+    "storage_bucket": "gestion-y-control-agro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714352450375:android:bf51ab118c8fe1edbf4a62",
+        "android_client_info": {
+          "package_name": "com.example.ensayotratamientoagro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "714352450375-adgv5qsppu1ld5vfcn0kqbv5o2m28fdl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqlCBrhGdCq-EeuM3Qo6J3FYYDRD3urKw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "714352450375-adgv5qsppu1ld5vfcn0kqbv5o2m28fdl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "714352450375-pc5a8jm8rkta4o089t57i3064rbcrlm9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ensayotratamientoagro"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714352450375:android:76840e211b88a566bf4a62",
+        "android_client_info": {
+          "package_name": "tu.paquete.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "714352450375-adgv5qsppu1ld5vfcn0kqbv5o2m28fdl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqlCBrhGdCq-EeuM3Qo6J3FYYDRD3urKw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "714352450375-adgv5qsppu1ld5vfcn0kqbv5o2m28fdl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "714352450375-pc5a8jm8rkta4o089t57i3064rbcrlm9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ensayotratamientoagro"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

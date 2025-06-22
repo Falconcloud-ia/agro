@@ -1,0 +1,152 @@
+Future<void> cargarFrecuencias() async {
+    if (ciudadSeleccionada == null || serieSeleccionada == null) return;
+
+    List<_DatoParcela> tempDatos = [];
+    Map<int, int> acumulador = {for (var i = 0; i <= 7; i++) i: 0};
+    parcelasUnicas.clear();
+
+    List<String> bloquesAFiltrar =
+        bloqueSeleccionado != null
+            ? [bloqueSeleccionado!]
+            : bloques.map((b) => b.id).toList();
+
+    for (var bloque in bloquesAFiltrar) {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('ciudades')
+              .doc(ciudadSeleccionada)
+              .collection('series')
+              .doc(serieSeleccionada)
+              .collection('bloques')
+              .doc(bloque)
+              .collection('parcelas')
+              .get();
+
+      for (var doc in snapshot.docs) {
+        final evaluaciones = doc['evaluacion'] as Map<String, dynamic>?;
+        final numero = doc['numero'] ?? int.tryParse(doc.id);
+
+        if (evaluaciones != null && numero != null) {
+          int total = evaluaciones.values.fold(
+            0,
+            (suma, v) => suma + (v as int),
+          );
+          parcelasUnicas.add(numero);
+
+          if (parcelaSeleccionada == null || parcelaSeleccionada == numero) {
+            tempDatos.add(
+              _DatoParcela(
+                bloque: bloque,
+                numero: numero,
+                valor: total.toDouble(),
+              ),
+            );
+
+            for (var i = 0; i <= 7; i++) {
+              acumulador[i] =
+                  acumulador[i]! + ((evaluaciones['$i'] ?? 0) as num).toInt();
+            }
+          }
+        }
+      }
+    }
+
+    parcelasUnicas = parcelasUnicas.toSet().toList()..sort();
+
+    setState(() {
+      todasLasParcelas = tempDatos;
+      datosParcela = tempDatos;
+      frecuenciaNotas = acumulador;
+    });
+  }
+
+  Future<void> mostrarRutaExportacion(String ruta) async {
+    await showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("✅ Archivo exportado"),
+            content: Text("Se ha guardado en:\n$ruta"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Entendido"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> exportarExcel() async {
+    final excel = Excel.createExcel();
+    final sheet = excel['Frecuencia'];
+    sheet.appendRow(['Nota', 'Frecuencia']);
+    for (var i = 0; i <= 7; i++) {
+      sheet.appendRow([i, frecuenciaNotas[i] ?? 0]);
+    }
+    final bytes = excel.encode();
+    final dir = await getApplicationDocumentsDirectory();
+    final path = "${dir.path}/frecuencia_export.xlsx";
+    final file = File(path)..writeAsBytesSync(bytes!);
+    await mostrarRutaExportacion(path);
+    Share.shareFiles([file.path], text: "Exportación de Frecuencia (Excel)");
+  }
+
+  Future<void> exportarPDF() async {
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        build:
+            (pw.Context context) => pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  "Frecuencia por Nota",
+                  style: pw.TextStyle(fontSize: 20),
+                ),
+                pw.SizedBox(height: 10),
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  children: [
+                    pw.TableRow(
+                      children: [
+                        pw.Center(child: pw.Text('Nota')),
+                        pw.Center(child: pw.Text('Frecuencia')),
+                      ],
+                    ),
+                    for (int i = 0; i <= 7; i++)
+                      pw.TableRow(
+                        children: [
+                          pw.Center(child: pw.Text("$i")),
+                          pw.Center(
+                            child: pw.Text("${frecuenciaNotas[i] ?? 0}"),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ],
+            ),
+      ),
+    );
+    final dir = await getApplicationDocumentsDirectory();
+    final path = "${dir.path}/frecuencia_export.pdf";
+    final file = File(path);
+    await file.writeAsBytes(await pdf.save());
+    await mostrarRutaExportacion(path);
+    Share.shareFiles([file.path], text: "Exportación de Frecuencia (PDF)");
+  }
+
+  Future<void> exportarCSV() async {
+    final csv = StringBuffer();
+    csv.writeln("Nota,Frecuencia");
+    for (var i = 0; i <= 7; i++) {
+      csv.writeln("$i,${frecuenciaNotas[i] ?? 0}");
+    }
+    final dir = await getApplicationDocumentsDirectory();
+    final path = "${dir.path}/frecuencia_export.csv";
+    final file = File(path);
+    await file.writeAsString(csv.toString());
+    await mostrarRutaExportacion(path);
+    Share.shareFiles([path], text: "Exportación de Frecuencia (CSV)");
+  }

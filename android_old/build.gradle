@@ -1,0 +1,40 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.1'
+
+        classpath 'com.google.gms:google-services:4.3.10' // Firebase Services
+    }
+}
+
+
+
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Reubicar directorio de build
+gradle.projectsLoaded {
+    rootProject.buildDir = new File(rootProject.rootDir, 'build')
+    rootProject.subprojects.each { subproject ->
+        subproject.buildDir = new File(rootProject.buildDir, subproject.name)
+    }
+}
+
+// Evaluar primero el módulo app
+subprojects {
+    evaluationDependsOn(':app')
+}
+
+// Tarea clean
+tasks.register("clean", Delete) {
+    delete rootProject.layout.buildDirectory
+}

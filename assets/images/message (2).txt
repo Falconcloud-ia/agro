@@ -1,0 +1,83 @@
+Expanded(
+              child: Column(
+                children: [
+                  if (frecuenciaNotas.isEmpty)
+                    const Center(child: Text("No hay datos para mostrar."))
+                  else
+                    Expanded(
+                      child: BarChart(
+                        BarChartData(
+                          barGroups:
+                              frecuenciaNotas.entries
+                                  .map(
+                                    (entry) => BarChartGroupData(
+                                      x: entry.key,
+                                      barRods: [
+                                        BarChartRodData(
+                                          toY: entry.value.toDouble(),
+                                          width: 16,
+                                          color: Colors.teal,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                  .toList(),
+                          titlesData: FlTitlesData(
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget:
+                                    (value, _) => Text("${value.toInt()}"),
+                              ),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: true),
+                            ),
+                            rightTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          gridData: FlGridData(show: true),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "📊 Estadísticas:",
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text("• Promedio: ${promedio.toStringAsFixed(1)} raíces"),
+                  Text("• Máximo: ${maximo.toStringAsFixed(0)}"),
+                  Text("• Mínimo: ${minimo.toStringAsFixed(0)}"),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 10,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: exportarCSV,
+                        icon: const Icon(Icons.download),
+                        label: const Text("Exportar CSV"),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: exportarExcel,
+                        icon: const Icon(Icons.table_chart),
+                        label: const Text("Exportar Excel"),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: exportarPDF,
+                        icon: const Icon(Icons.picture_as_pdf),
+                        label: const Text("Exportar PDF"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
