@@ -1,0 +1,1 @@
+//Proceso bash que obtenga toda la data actualizada, foto actual o bdd completa(no optimo) 
