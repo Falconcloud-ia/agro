@@ -11,8 +11,7 @@ plugins {
 // 🔐 Cargar propiedades de la firma desde key.properties
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-val hasKeystore = keystorePropertiesFile.exists()
-if (hasKeystore) {
+if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
@@ -39,28 +38,27 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // ✅ TEMPORALMENTE COMENTADO - signing configs
+    /*
     signingConfigs {
-        if (hasKeystore) {
-            create("release") {
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-            }
+        create("release") {
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
         }
     }
+    */
 
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
             isShrinkResources = false
-            if (hasKeystore) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            // ✅ Usar debug signing por ahora
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
-
 
 afterEvaluate {
     tasks.named("assembleRelease") {
@@ -79,7 +77,6 @@ afterEvaluate {
     }
 }
 
-
 flutter {
     source = "../.."
-}
+} 
