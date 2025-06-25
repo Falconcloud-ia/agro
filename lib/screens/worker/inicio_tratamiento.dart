@@ -6,6 +6,7 @@ import '../login_screen.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'package:controlgestionagro/models/tratamiento_local.dart';
+import 'package:controlgestionagro/models/query_document_snapshot_fake.dart';
 import 'package:controlgestionagro/services/offline_sync_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -857,16 +858,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
 QueryDocumentSnapshotFake _mapToQuerySnapshot(Map<String, dynamic> map) {
   return QueryDocumentSnapshotFake(map['id'], {'nombre': map['nombre']});
-}
-
-class QueryDocumentSnapshotFake {
-  final String id;
-  final Map<String, dynamic> _data;
-
-  QueryDocumentSnapshotFake(this.id, this._data);
-
-  Map<String, dynamic> data() => _data;
-  dynamic operator [](String key) => _data[key];
 }
 
 String obtenerCampo(dynamic doc, String campo) {

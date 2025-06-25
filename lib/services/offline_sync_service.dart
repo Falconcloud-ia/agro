@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/tratamiento_local.dart';
+import 'package:controlgestionagro/models/tratamiento_local.dart';
 
 class OfflineSyncService {
   final _box = Hive.box('offline_data');
