@@ -14,9 +14,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
 import 'package:controlgestionagro/models/users_local.dart';
 
-import 'package:hive/hive.dart';
-import '../models/users_local.dart';
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 

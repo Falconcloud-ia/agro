@@ -10,6 +10,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:excel/excel.dart';
 
+import 'package:controlgestionagro/models/dato_parcela.dart';
+
 class GraficoFrecuencia extends StatefulWidget {
   const GraficoFrecuencia({super.key});
 
@@ -28,8 +30,8 @@ class _GraficoFrecuenciaState extends State<GraficoFrecuencia> {
   List<QueryDocumentSnapshot> bloques = [];
   List<int> parcelasUnicas = [];
 
-  List<_DatoParcela> datosParcela = [];
-  List<_DatoParcela> todasLasParcelas = [];
+  List<DatoParcela> datosParcela = [];
+  List<DatoParcela> todasLasParcelas = [];
   Map<int, int> frecuenciaNotas = {};
 
   @override
@@ -165,7 +167,7 @@ class _GraficoFrecuenciaState extends State<GraficoFrecuencia> {
         );
 
         todasLasParcelas.add(
-          _DatoParcela(
+          DatoParcela(
             numeroFicha: numeroFicha,
             fechaCosecha: fechaCosecha ?? fechaCreacion,
             nombreSerie: nombreSerie,
@@ -731,40 +733,3 @@ class _GraficoFrecuenciaState extends State<GraficoFrecuencia> {
   }
 }
 
-class _DatoParcela {
-  final int numeroFicha;
-  final DateTime? fechaCosecha;
-  final String nombreSerie;
-  final String nombreCiudad;
-  final num superficie;
-
-  final String nombreBloque;
-  final int numeroTratamiento;
-  final double pesoRaices;
-  final String pesoHojas;
-  final String ndvi;
-  final String observaciones;
-  final List<int> frecuenciaNotas;
-
-  final int raicesA; // ⬅️ nuevo
-  final int raicesB; // ⬅️ nuevo
-
-  _DatoParcela({
-    required this.numeroFicha,
-    required this.fechaCosecha,
-    required this.nombreSerie,
-    required this.nombreCiudad,
-    required this.superficie,
-    required this.nombreBloque,
-    required this.numeroTratamiento,
-    required this.pesoRaices,
-    required this.pesoHojas,
-    required this.ndvi,
-    required this.observaciones,
-    required this.frecuenciaNotas,
-    required this.raicesA,
-    required this.raicesB,
-  });
-
-  int get totalRaices => raicesA + raicesB; // ⬅️ NUEVO getter
-}
