@@ -60,7 +60,7 @@ class FirestoreHiveSyncService {
   Future<void> _resguardarBloque(String ciudadId, String serieId, QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
     final bloqueId = doc.id;
     final data = {...doc.data(), 'ciudadId': ciudadId, 'serieId': serieId};
-    await _bloquesBox.put('${ciudadId}_$serieId_$bloqueId', data);
+    await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
 
     try {
       final parcelas = await doc.reference.collection('parcelas').get();
