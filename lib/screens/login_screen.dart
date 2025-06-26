@@ -27,12 +27,25 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   String errorMessage = '';
   List<String> usuariosRecientes = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _cargarUsuariosRecientes();
-    _verificarUsuarioOperadorPersistido(); // 👈 Agregamos esta verificación
+    _verificarUsuarioOperadorPersistido();
+    _inicializar();
+  }
+
+
+  Future<void> _inicializar() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await syncFirestoreToHive();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _verificarUsuarioOperadorPersistido() async {
@@ -117,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
           rol: userData['rol'] ?? '',
           nombre: userData['nombre'] ?? '',
           ciudad: userData['ciudad'] ?? '',
-          password: passwordController.text.trim(), // ✅ agregado
+          password: passwordController.text.trim(),
         );
         await usuarioBox.put('usuario_actual', usuarioLocal.toMap());
 
@@ -187,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
           rol: data['rol'] ?? '',
           nombre: data['nombre'] ?? '',
           ciudad: data['ciudad'] ?? '',
-          password: '', // ✅ agregado, valor vacío
+          password: '',
         );
         await usuarioBox.put('usuario_actual', usuarioLocal.toMap());
 
@@ -232,6 +245,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF005A56)),
+              SizedBox(height: 16),
+              Text("Sincronizando datos...", style: TextStyle(fontSize: 16)),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -329,8 +357,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               ElevatedButton.icon(
                 onPressed: () async {
-                  // 👉 Sincronizamos datos remotos hacia Hive
-                  await syncFirestoreToHive();
                   final box = Hive.box('offline_user');
                   final usuario = box.get('usuario_actual');
 
@@ -345,7 +371,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     return;
                   }
 
-                  // 🔍 Si no está en Hive, pero sí hay un usuario anónimo activo, usarlo y guardarlo en Hive
                   final currentUser = FirebaseAuth.instance.currentUser;
                   if (currentUser != null && currentUser.isAnonymous) {
                     final usuarioLocal = UsuarioLocal(
@@ -369,8 +394,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // ⚠️ Solo si no hay Hive ni usuario anónimo activo, creamos uno nuevo
                   try {
-                    final cred =
-                        await FirebaseAuth.instance.signInAnonymously();
+                    final cred = await FirebaseAuth.instance.signInAnonymously();
                     final user = cred.user!;
 
                     final usuarioLocal = UsuarioLocal(
