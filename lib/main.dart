@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'config/hive_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controlgestionagro/services/offline_sync_service.dart';
@@ -30,18 +31,8 @@ void main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  // 🔹 Inicializa Hive para almacenamiento offline
-  await Hive.initFlutter();
-  await Hive.openBox('offline_data');
-  await Hive.openBox('user_data');
-  await Hive.openBox('offline_user'); // <- caja clave
-
-  // 🔹 Data para inicio_tratamiento
-  await Hive.openBox('offline_ciudades');
-  await Hive.openBox('offline_series');
-  await Hive.openBox('offline_bloques');
-  await Hive.openBox('offline_parcelas');
-  await Hive.openBox('offline_tratamientos');
+  // 🔹 Inicializa Hive usando la nueva configuración centralizada
+  await HiveConfig.init();
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');

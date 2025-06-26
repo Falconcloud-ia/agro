@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'evaluacion_dano.dart';
 import 'package:intl/intl.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
+import 'package:controlgestionagro/data/hive_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class AlwaysDisabledFocusNode extends FocusNode {
@@ -37,6 +38,7 @@ class FormularioTratamiento extends StatefulWidget {
 class _FormularioTratamientoState extends State<FormularioTratamiento> {
   bool guardado = false;
   late Box hiveBox;
+  final HiveRepository hive = HiveRepository();
   String? userId;
   List<dynamic> parcelas = [];
   int currentIndex = 0;
@@ -55,7 +57,7 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
   @override
   void initState() {
     super.initState();
-    hiveBox = Hive.box('offline_tratamientos');
+    hiveBox = hive.box('offline_tratamientos');
     userId = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
     cargarCiudadYSerie();
     cargarTodasLasParcelas();
@@ -318,7 +320,7 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     if (parcelas.isEmpty) return;
 
     final parcela = parcelas[currentIndex];
-    final box = Hive.box('offline_tratamientos');
+    final box = hive.box('offline_tratamientos');
     final id =
         parcela['id']; // asegúrate de guardar esto al momento de persistir
     final data = box.get(id);
@@ -371,7 +373,7 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
   }
 
   Future<void> cargarTodasLasParcelas() async {
-    final box = Hive.box('offline_parcelas');
+    final box = hive.box('offline_parcelas');
     final claveBloques = 'bloques_${widget.ciudadId}_${widget.serieId}';
     final claveParcelas = 'parcelas_${widget.ciudadId}_${widget.serieId}';
 

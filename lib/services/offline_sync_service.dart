@@ -1,10 +1,12 @@
-import 'package:hive/hive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controlgestionagro/models/tratamiento_local.dart';
+import 'package:controlgestionagro/data/hive_repository.dart';
 
 class OfflineSyncService {
-  final _box = Hive.box('offline_data');
+  final HiveRepository _hive = HiveRepository();
   final _firestore = FirebaseFirestore.instance;
+
+  Box get _box => _hive.box('offline_data');
 
   Future<void> guardarLocal(TratamientoLocal data) async {
     await _box.add(data.toMap());
