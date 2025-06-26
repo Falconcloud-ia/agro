@@ -8,7 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:controlgestionagro/models/tratamiento_local.dart';
 import 'package:controlgestionagro/models/query_document_snapshot_fake.dart';
 import 'package:controlgestionagro/services/offline_sync_service.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:controlgestionagro/data/hive_repository.dart';
 
 class InicioTratamientoScreen extends StatefulWidget {
   const InicioTratamientoScreen({super.key});
@@ -35,6 +35,8 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     text: "10",
   );
 
+  final HiveRepository hive = HiveRepository();
+
   @override
   void initState() {
     super.initState();
@@ -45,7 +47,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     if (ciudadSeleccionada == null || serieSeleccionada == null) return;
 
     final superficie = superficieController.text.trim();
-    final box = Hive.box('offline_series');
+    final box = hive.box('offline_series');
     final key = 'series_$ciudadSeleccionada';
 
     final connectivity = await Connectivity().checkConnectivity();
@@ -92,7 +94,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   Future<void> cargarCiudades() async {
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
-    final box = Hive.box('offline_ciudades');
+    final box = hive.box('offline_ciudades');
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'default';
 
     if (hayConexion) {
@@ -117,7 +119,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
-    final box = Hive.box('offline_series');
+    final box = hive.box('offline_series');
 
     if (hayConexion) {
       final doc =
@@ -162,7 +164,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
-    final box = Hive.box('offline_series');
+    final box = hive.box('offline_series');
 
     if (hayConexion) {
       final snapshot =
@@ -191,7 +193,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
-    final box = Hive.box('offline_bloques');
+    final box = hive.box('offline_bloques');
 
     if (hayConexion) {
       final snapshot =
@@ -218,7 +220,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
-    final box = Hive.box('offline_parcelas');
+    final box = hive.box('offline_parcelas');
     final key =
         'parcelas_${ciudadSeleccionada}_${serieSeleccionada}_$bloqueSeleccionado';
 
@@ -526,7 +528,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
             icon: const Icon(Icons.logout, color: Colors.black),
             tooltip: "Cerrar sesión",
             onPressed: () async {
-              final userBox = Hive.box('offline_user');
+              final userBox = hive.box('offline_user');
               await userBox.delete('usuario_actual');
 
               if (context.mounted) {
