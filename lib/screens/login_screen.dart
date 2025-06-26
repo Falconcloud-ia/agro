@@ -13,6 +13,7 @@ import 'worker/worker_dashboard.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
 import 'package:controlgestionagro/models/users_local.dart';
+import 'package:controlgestionagro/services/firestore_hive_sync_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -328,6 +329,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
               ElevatedButton.icon(
                 onPressed: () async {
+                  // 👉 Sincronizamos datos remotos hacia Hive
+                  await syncFirestoreToHive();
                   final box = Hive.box('offline_user');
                   final usuario = box.get('usuario_actual');
 
