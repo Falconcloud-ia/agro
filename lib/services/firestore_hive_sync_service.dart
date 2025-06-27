@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive/hive.dart';
+
 import '../data/hive_repository.dart';
+
 
 /// Servicio encargado de respaldar en Hive toda la informacion de Firestore.
 class FirestoreHiveSyncService {
@@ -8,29 +10,52 @@ class FirestoreHiveSyncService {
   final HiveRepository _hive = HiveRepository();
 
   Box get _ciudadesBox => _hive.box('offline_ciudades');
+
   Box get _seriesBox => _hive.box('offline_series');
+
   Box get _bloquesBox => _hive.box('offline_bloques');
+
   Box get _parcelasBox => _hive.box('offline_parcelas');
+
   Box get _tratamientosBox => _hive.box('offline_tratamientos');
 
-  /// Inicia la sincronizacion completa de Firestore hacia Hive.
+  /// Inicia la sincronización completa de Firestore hacia Hive.
   Future<void> syncFirestoreToHive() async {
     try {
+      print('📡 Iniciando sincronización Firestore → Hive...');
       final ciudades = await _firestore.collection('ciudades').get();
 
       for (final ciudad in ciudades.docs) {
         await _resguardarCiudad(ciudad);
       }
+
+      print('✅ Sincronización completa');
     } catch (e) {
-      // Error de conexion o permisos
       print('❌ Error general en syncFirestoreToHive: $e');
     }
   }
 
-  Future<void> _resguardarCiudad(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+  Map<String, dynamic> _convertTimestampsToDateTime(Map<String, dynamic> data) {
+    return data.map((key, value) {
+      if (value is Timestamp) {
+        return MapEntry(key, value.toDate());
+      }
+      return MapEntry(key, value);
+    });
+  }
+
+  Future<void> _resguardarCiudad(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
     final ciudadId = doc.id;
-    final data = doc.data();
+    final data = _convertTimestampsToDateTime(doc.data());
+
     await _ciudadesBox.put(ciudadId, data);
+    print('🌆 data from firestore Ciudad: $ciudadId → ${data['nombre']}');
+
+    final ciudadGuardada = await _ciudadesBox.get(ciudadId);
+    print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
+    );
 
     try {
       final series = await doc.reference.collection('series').get();
@@ -42,7 +67,10 @@ class FirestoreHiveSyncService {
     }
   }
 
-  Future<void> _resguardarSerie(String ciudadId, QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+  Future<void> _resguardarSerie(
+    String ciudadId,
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
     final serieId = doc.id;
     final data = {...doc.data(), 'ciudadId': ciudadId};
     await _seriesBox.put('${ciudadId}_$serieId', data);
@@ -57,7 +85,11 @@ class FirestoreHiveSyncService {
     }
   }
 
-  Future<void> _resguardarBloque(String ciudadId, String serieId, QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+  Future<void> _resguardarBloque(
+    String ciudadId,
+    String serieId,
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
     final bloqueId = doc.id;
     final data = {...doc.data(), 'ciudadId': ciudadId, 'serieId': serieId};
     await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
@@ -72,7 +104,12 @@ class FirestoreHiveSyncService {
     }
   }
 
-  Future<void> _resguardarParcela(String ciudadId, String serieId, String bloqueId, QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+  Future<void> _resguardarParcela(
+    String ciudadId,
+    String serieId,
+    String bloqueId,
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
     final parcelaId = doc.id;
     final data = {
       ...doc.data(),
@@ -80,10 +117,14 @@ class FirestoreHiveSyncService {
       'serieId': serieId,
       'bloqueId': bloqueId,
     };
-    await _parcelasBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', data);
+    await _parcelasBox.put(
+      '${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
+      data,
+    );
 
     try {
-      final tratamiento = await doc.reference.collection('tratamientos').doc('actual').get();
+      final tratamiento =
+          await doc.reference.collection('tratamientos').doc('actual').get();
       if (tratamiento.exists) {
         final tData = {
           ...?tratamiento.data(),
@@ -92,7 +133,10 @@ class FirestoreHiveSyncService {
           'bloqueId': bloqueId,
           'parcelaId': parcelaId,
         };
-        await _tratamientosBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', tData);
+        await _tratamientosBox.put(
+          '${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
+          tData,
+        );
       }
     } catch (e) {
       print('❌ Error obteniendo tratamiento de $parcelaId: $e');
