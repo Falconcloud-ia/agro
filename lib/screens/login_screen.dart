@@ -14,6 +14,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
 import 'package:controlgestionagro/models/users_local.dart';
 import 'package:controlgestionagro/services/firestore_hive_sync_service.dart';
+import 'package:controlgestionagro/screens/hive_viewer_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,16 +28,24 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   String errorMessage = '';
   List<String> usuariosRecientes = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _cargarUsuariosRecientes();
     _verificarUsuarioOperadorPersistido();
-    _inicializar();
+    _verificarConexionYMostrarDialogo(); // ⬅️ Nuevo método separado
   }
 
+  void _verificarConexionYMostrarDialogo() async {
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity != ConnectivityResult.none) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mostrarDialogoSincronizacion();
+      });
+    }
+  }
 
   Future<void> _inicializar() async {
     setState(() {
@@ -77,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
 
-    return null; // No hay usuario válido
+    return null;
   }
 
   Future<void> _cargarUsuariosRecientes() async {
@@ -149,6 +158,33 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() => errorMessage = "⚠️ Usuario o contraseña incorrectos.");
+    }
+  }
+
+  Future<void> _mostrarDialogoSincronizacion() async {
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // obliga a elegir acción
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Sincronización"),
+          content: const Text("¿Desea iniciar la sincronización de datos?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Salir"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text("Continuar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar == true) {
+      await _inicializar();
     }
   }
 
@@ -394,25 +430,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // ⚠️ Solo si no hay Hive ni usuario anónimo activo, creamos uno nuevo
                   try {
-                    final cred = await FirebaseAuth.instance.signInAnonymously();
-                    final user = cred.user!;
+                    /*final connectivity = await Connectivity().checkConnectivity();
+                    if (connectivity == ConnectivityResult.none) {
+                      final usuarioLocal = UsuarioLocal(
+                        uid: user.uid,
+                        email: 'anonimo@operador.com',
+                        rol: 'operador',
+                        nombre: 'Usuario Operador',
+                        ciudad: '',
+                        password: '',
+                      );
+                      //await box.put('usuario_actual', usuarioLocal.toMap());
+                    }
 
-                    final usuarioLocal = UsuarioLocal(
-                      uid: user.uid,
-                      email: 'anonimo@operador.com',
-                      rol: 'operador',
-                      nombre: 'Usuario Operador',
-                      ciudad: '',
-                      password: '',
-                    );
-                    await box.put('usuario_actual', usuarioLocal.toMap());
+                     */
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InicioTratamientoScreen(),
+                        ),
+                      );
+                    /*} else {
+                      print( '❌ Error: Se esperaba conexión para iniciar sesión como operador.',);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Conexión requerida para esta operación',
+                          ),
+                        ),
+                      );
+                    }
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const InicioTratamientoScreen(),
-                      ),
-                    );
+                     */
                   } catch (e) {
                     print('❌ Error al crear usuario anónimo: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -439,6 +488,28 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
 
               const SizedBox(height: 16),
+
+              TextButton(
+                onPressed: _mostrarDialogoSincronizacion,
+                child: const Text(
+                  "Iniciar Sincronización",
+                  style: TextStyle(color: Colors.blue),
+                ),
+              ),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HiveViewerScreen()),
+                  );
+                },
+                child: const Text(
+                  "🧪 Ver datos Hive",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+
               TextButton(
                 onPressed: () {
                   Navigator.push(

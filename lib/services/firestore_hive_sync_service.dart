@@ -19,6 +19,9 @@ class FirestoreHiveSyncService {
 
   Box get _tratamientosBox => _hive.box('offline_tratamientos');
 
+  Box get _usuarioBox => _hive.box('offline_user');
+  /// Devuelve el usuario actual almacenado en Hive como Map.
+
   /// Inicia la sincronización completa de Firestore hacia Hive.
   Future<void> syncFirestoreToHive() async {
     try {
