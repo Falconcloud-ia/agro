@@ -94,7 +94,7 @@ class FirestoreHiveSyncService {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final bloqueId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId};
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'bloqueId': bloqueId};
     await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
 
     try {
