@@ -169,8 +169,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   if (ciudadSeleccionada == null) return;
 
   final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
-  final key = 'series_$ciudadSeleccionada';
-
   if (hayConexion) {
     final snapshot = await FirebaseFirestore.instance
         .collection('ciudades')
@@ -180,10 +178,15 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     setState(() => series = snapshot.docs);
 
   } else {
-    final seriesMapList = _seriesBox.keys.map((key) {
+    final seriesMapList = _seriesBox.keys
+        .where((key) {
       final data = _seriesBox.get(key);
-      return {'id': key, 'nombre': data['nombre']};
-    }).where((serie) => serie['ciudadId'] == ciudadSeleccionada).toList().toList();
+      return data['ciudadId'] == ciudadSeleccionada;
+    }).map((key) {
+      final data = _seriesBox.get(key);
+      return {'id': key, 'nombre': data['nombre'], 'ciudadId': data['ciudadId']};
+    })
+        .toList();
 
     setState(() => series = seriesMapList);
   }
@@ -208,7 +211,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     final bloquesList = snapshot.docs.map((doc) => doc.id).toList();
     setState(() => bloques = bloquesList);
 
-    await _bloquesBox.put(key, bloquesList);
   } else {
     final bloquesMapList = _bloquesBox.keys.map((key) {
       final data = _bloquesBox.get(key);
