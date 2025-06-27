@@ -26,7 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
         "email": emailController.text.trim(),
-        "fecha_creacion": DateTime.now(),
+        "fecha_creacion": FieldValue.serverTimestamp(),
       });
 
       print("✅ Usuario registrado y guardado en Firestore correctamente.");

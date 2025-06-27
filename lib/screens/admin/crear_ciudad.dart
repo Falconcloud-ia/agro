@@ -41,7 +41,7 @@ class _CrearCiudadState extends State<CrearCiudad> {
     try {
       await FirebaseFirestore.instance.collection('ciudades').add({
         "nombre": nombreCiudad,
-        "fecha_creacion": DateTime.now(),
+        "fecha_creacion": FieldValue.serverTimestamp(),
       });
 
       setState(() {

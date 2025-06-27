@@ -72,7 +72,7 @@ class FirestoreHiveSyncService {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final serieId = doc.id;
-    final data = {...doc.data(), 'ciudadId': ciudadId};
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId};
     await _seriesBox.put('${ciudadId}_$serieId', data);
 
     try {
@@ -91,7 +91,7 @@ class FirestoreHiveSyncService {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final bloqueId = doc.id;
-    final data = {...doc.data(), 'ciudadId': ciudadId, 'serieId': serieId};
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId};
     await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
 
     try {
@@ -122,12 +122,11 @@ class FirestoreHiveSyncService {
       data,
     );
 
-    try {
-      final tratamiento =
-          await doc.reference.collection('tratamientos').doc('actual').get();
+    /*try {
+      final tratamiento = await doc.reference.collection('tratamientos').doc('actual').get();
       if (tratamiento.exists) {
         final tData = {
-          ...?tratamiento.data(),
+          ...?_convertTimestampsToDateTime(tratamiento.data()),
           'ciudadId': ciudadId,
           'serieId': serieId,
           'bloqueId': bloqueId,
@@ -141,6 +140,8 @@ class FirestoreHiveSyncService {
     } catch (e) {
       print('❌ Error obteniendo tratamiento de $parcelaId: $e');
     }
+
+     */
   }
 }
 

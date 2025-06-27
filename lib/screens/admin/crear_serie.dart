@@ -315,7 +315,7 @@ class _CrearSerieState extends State<CrearSerie> {
         "nombre": nombreSerie,
         "matriz_largo": parcelas,
         "matriz_alto": bloques,
-        "fecha_creacion": DateTime.now(),
+        "fecha_creacion": FieldValue.serverTimestamp(),
       });
 
       // 🔁 Crear bloques y parcelas
