@@ -188,19 +188,24 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
       setState(() => series = snapshot.docs);
     }else {
-  final seriesMapList = _seriesBox.keys
-      .where((key) => key.contains(ciudadSeleccionada))
-      .map((key) {
+      final seriesMapList = _seriesBox.keys
+          .where((key) => key.contains(ciudadSeleccionada))
+          .map((key) {
         final data = _seriesBox.get(key);
-        return {
-          'id': data['serieId'],
-          'nombre': data['nombre'],
-          'ciudadId': data['ciudadId'],
-        };
+        if (data is Map<String, dynamic>) {
+          return {
+            'id': data['serieId'],
+            'nombre': data['nombre'],
+            'ciudadId': data['ciudadId'],
+          };
+        } else {
+          print('❌ Entrada corrupta en seriesBox con key: $key → $data');
+          return null;
+        }
       })
-      .where((data) =>
-          data['ciudadId'] == ciudadSeleccionada) // filtro adicional para mayor seguridad
-      .toList();
+          .whereType<Map<String, dynamic>>() // filtra los nulos
+          .where((data) => data['ciudadId'] == ciudadSeleccionada)
+          .toList();
 
   print('📦 Series offline filtradas (por clave): $seriesMapList');
   setState(() => series = seriesMapList);
