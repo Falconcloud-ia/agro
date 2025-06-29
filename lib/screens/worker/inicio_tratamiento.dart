@@ -191,22 +191,24 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
       final seriesMapList = _seriesBox.keys
           .where((key) => key.contains(ciudadSeleccionada))
           .map((key) {
-        final data = _seriesBox.get(key);
-        if (data is Map<String, dynamic>) {
+        final rawData = _seriesBox.get(key);
+        if (rawData is Map) {
+          final data = Map<String, dynamic>.from(rawData); // fuerza el tipo
           return {
             'id': data['serieId'],
             'nombre': data['nombre'],
             'ciudadId': data['ciudadId'],
           };
         } else {
-          print('❌ Entrada corrupta en seriesBox con key: $key → $data');
+          print('❌ Entrada inválida en Hive para key: $key → $rawData');
           return null;
         }
       })
-          .whereType<Map<String, dynamic>>() // filtra los nulos
+          .whereType<Map<String, dynamic>>()
           .where((data) => data['ciudadId'] == ciudadSeleccionada)
           .toList();
 
+      setState(() => series = seriesMapList);
   print('📦 Series offline filtradas (por clave): $seriesMapList');
   setState(() => series = seriesMapList);
 }

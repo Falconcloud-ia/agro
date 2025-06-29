@@ -53,6 +53,10 @@ class FirestoreHiveSyncService {
     await _ciudadesBox.put(ciudadId, data);
     print('🌆 data from firestore Ciudad: $ciudadId → ${data['nombre']}');
 
+    final ciudadGuardada = await _ciudadesBox.get(ciudadId);
+    print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
+    );
+
     try {
       final series = await doc.reference.collection('series').get();
       for (final serie in series.docs) {
