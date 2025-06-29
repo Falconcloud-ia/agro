@@ -75,14 +75,37 @@ class FirestoreHiveSyncService {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final serieId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId};
+    final data = {
+      ..._convertTimestampsToDateTime(doc.data()),
+      'ciudadId': ciudadId,
+    };
     await _seriesBox.put('${ciudadId}_$serieId', data);
 
+    List<Map<String, dynamic>> bloquesParaHive = [];
+    List<Map<String, dynamic>> parcelasParaHive = [];
+
     try {
-      final bloques = await doc.reference.collection('bloques').get();
+      final bloques =
+          await doc.reference.collection('bloques').orderBy('nombre').get();
       for (final bloque in bloques.docs) {
-        await _resguardarBloque(ciudadId, serieId, bloque);
+        await _resguardarBloque(
+          ciudadId,
+          serieId,
+          bloque,
+          bloquesParaHive: bloquesParaHive,
+          parcelasParaHive: parcelasParaHive,
+        );
       }
+
+      // Respaldo global de bloques y parcelas para la serie
+      await _parcelasBox.put(
+        'bloques_${ciudadId}_$serieId',
+        bloquesParaHive,
+      );
+      await _parcelasBox.put(
+        'parcelas_${ciudadId}_$serieId',
+        parcelasParaHive,
+      );
     } catch (e) {
       print('❌ Error obteniendo bloques de $serieId: $e');
     }
@@ -91,17 +114,53 @@ class FirestoreHiveSyncService {
   Future<void> _resguardarBloque(
     String ciudadId,
     String serieId,
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) async {
+    QueryDocumentSnapshot<Map<String, dynamic>> doc, {
+    List<Map<String, dynamic>>? bloquesParaHive,
+    List<Map<String, dynamic>>? parcelasParaHive,
+  }) async {
     final bloqueId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'bloqueId': bloqueId};
-    await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
+    final data = {
+      ..._convertTimestampsToDateTime(doc.data()),
+      'ciudadId': ciudadId,
+      'serieId': serieId,
+      'bloqueId': bloqueId,
+    };
+    await _bloquesBox.put('${ciudadId}_${serieId}_$bloqueId', data);
+
+    // Para la vista de todas las parcelas guardamos nombre del bloque
+    if (bloquesParaHive != null) {
+      bloquesParaHive.add({'id': bloqueId, 'nombre': data['nombre']});
+    }
 
     try {
-      final parcelas = await doc.reference.collection('parcelas').get();
+      final parcelas =
+          await doc.reference.collection('parcelas').orderBy('numero').get();
+
+      List<Map<String, dynamic>> listaPorBloque = [];
       for (final parcela in parcelas.docs) {
         await _resguardarParcela(ciudadId, serieId, bloqueId, parcela);
+
+        final pData = parcela.data();
+        listaPorBloque.add({
+          'id': parcela.id,
+          'numero': pData['numero'],
+          'numero_tratamiento': pData['numero_tratamiento'],
+          'numero_ficha': pData['numero_ficha'],
+        });
+
+        if (parcelasParaHive != null) {
+          final tmp = Map<String, dynamic>.from(pData);
+          tmp['id'] = parcela.id;
+          tmp['bloque'] = bloqueId;
+          parcelasParaHive.add(tmp);
+        }
       }
+
+      // Respaldo de parcelas para este bloque
+      await _parcelasBox.put(
+        'parcelas_${ciudadId}_${serieId}_$bloqueId',
+        listaPorBloque,
+      );
     } catch (e) {
       print('❌ Error obteniendo parcelas de $bloqueId: $e');
     }
@@ -115,7 +174,7 @@ class FirestoreHiveSyncService {
   ) async {
     final parcelaId = doc.id;
     final data = {
-      ...doc.data(),
+      ..._convertTimestampsToDateTime(doc.data()),
       'ciudadId': ciudadId,
       'serieId': serieId,
       'bloqueId': bloqueId,
@@ -125,26 +184,25 @@ class FirestoreHiveSyncService {
       data,
     );
 
-    /*try {
-      final tratamiento = await doc.reference.collection('tratamientos').doc('actual').get();
+    try {
+      final tratamiento =
+          await doc.reference.collection('tratamientos').doc('actual').get();
       if (tratamiento.exists) {
         final tData = {
-          ...?_convertTimestampsToDateTime(tratamiento.data()),
+          ..._convertTimestampsToDateTime(tratamiento.data()!),
           'ciudadId': ciudadId,
           'serieId': serieId,
           'bloqueId': bloqueId,
           'parcelaId': parcelaId,
         };
         await _tratamientosBox.put(
-          '${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
+          'tratamiento_${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
           tData,
         );
       }
     } catch (e) {
       print('❌ Error obteniendo tratamiento de $parcelaId: $e');
     }
-
-     */
   }
 }
 
