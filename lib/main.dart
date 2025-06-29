@@ -27,8 +27,8 @@ void main() async {
   // 🔹 Inicializa Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    persistenceEnabled: false,
+    //cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
   // 🔹 Inicializa Hive usando la nueva configuración centralizada

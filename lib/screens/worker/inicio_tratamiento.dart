@@ -37,9 +37,13 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   );
 
   final HiveRepository hive = HiveRepository();
+
   Box get _ciudadesBox => hive.box('offline_ciudades');
+
   Box get _seriesBox => hive.box('offline_series');
+
   Box get _bloquesBox => hive.box('offline_bloques');
+
   Box get _parcelasBox => hive.box('offline_parcelas');
 
   @override
@@ -104,17 +108,22 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     final firestore = FirebaseFirestore.instance;
 
     if (hayConexion) {
-      final snapshot = await firestore.collection('ciudades').get(); //Obtiene ciudades desde caché almacenado en firestore para casos con o sin conxión
+      final snapshot =
+          await firestore
+              .collection('ciudades')
+              .get(); //Obtiene ciudades desde caché almacenado en firestore para casos con o sin conxión
       setState(() => ciudades = snapshot.docs);
 
-      final ciudadMapList = snapshot.docs
-          .map((doc) => {'id': doc.id, 'nombre': doc['nombre']})
-          .toList();
+      final ciudadMapList =
+          snapshot.docs
+              .map((doc) => {'id': doc.id, 'nombre': doc['nombre']})
+              .toList();
     } else {
-      final ciudadMapList = _ciudadesBox.keys.map((key) {
-        final data = _ciudadesBox.get(key);
-        return {'id': key, 'nombre': data['nombre']};
-      }).toList();
+      final ciudadMapList =
+          _ciudadesBox.keys.map((key) {
+            final data = _ciudadesBox.get(key);
+            return {'id': key, 'nombre': data['nombre']};
+          }).toList();
 
       setState(() => ciudades = ciudadMapList);
     }
@@ -166,127 +175,153 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   }
 
   Future<void> cargarSeries() async {
-  if (ciudadSeleccionada == null) return;
+    if (ciudadSeleccionada == null) return;
 
-  final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
-  if (hayConexion) {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('ciudades')
-        .doc(ciudadSeleccionada)
-        .collection('series')
-        .get();
-    setState(() => series = snapshot.docs);
+    final hayConexion =
+        (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+    if (hayConexion) {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('ciudades')
+              .doc(ciudadSeleccionada)
+              .collection('series')
+              .get();
+      setState(() => series = snapshot.docs);
+    } else {
+      final seriesMapList =
+          _seriesBox.keys
+              .where((key) {
+                final data = _seriesBox.get(key);
+                return data['ciudadId'] == ciudadSeleccionada;
+              })
+              .map((key) {
+                final data = _seriesBox.get(key);
+                return {
+                  'id': data['serieId'],
+                  'nombre': data['nombre'],
+                  'ciudadId': data['ciudadId'],
+                };
+              })
+              .toList();
 
-  } else {
-    final seriesMapList = _seriesBox.keys.where((key) {
-      final data = _seriesBox.get(key);
-      return data['ciudadId'] == ciudadSeleccionada;
-    }).map((key) {
-      final data = _seriesBox.get(key);
-      return {'id': key, 'nombre': data['nombre'], 'ciudadId': data['ciudadId']};
-    }).toList();
-
-    setState(() => series = seriesMapList);
+      setState(() => series = seriesMapList);
+    }
   }
-}
-
 
   Future<void> cargarBloques() async {
-  if (ciudadSeleccionada == null || serieSeleccionada == null) return;
+    if (ciudadSeleccionada == null || serieSeleccionada == null) return;
 
-  final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
-  if (hayConexion) {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('ciudades')
-        .doc(ciudadSeleccionada)
-        .collection('series')
-        .doc(serieSeleccionada)
-        .collection('bloques')
-        .get();
+    final hayConexion =
+        (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+    if (hayConexion) {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('ciudades')
+              .doc(ciudadSeleccionada)
+              .collection('series')
+              .doc(serieSeleccionada)
+              .collection('bloques')
+              .get();
 
-    final bloquesList = snapshot.docs.map((doc) => doc.id).toList();
-    print('🧱 bloquesList: $bloquesList');
-    setState(() => bloques = bloquesList);
-  } else {
+      final bloquesList = snapshot.docs.map((doc) => doc.id).toList();
+      print('🧱 bloquesList: $bloquesList');
+      setState(() => bloques = bloquesList);
+    } else {
+      final bloquesList =
+          _bloquesBox.keys
+              .where(
+                (key) => key.contains(serieSeleccionada),
+              ) // Filtra claves que contienen el ID de la serie
+              .map((key) {
+                final data = _bloquesBox.get(key);
+                return data['bloqueId'];
+              })
+              .toList()
+              .cast<String>();
 
-    final bloquesList = _bloquesBox.keys
-        .where((key) => key.contains(serieSeleccionada)) // Filtra claves que contienen el ID de la serie
-        .map((key) {
-      final data = _bloquesBox.get(key);
-      return data['bloqueId'];
-    })
-        .toList()
-        .cast<String>();
-
-    print('🧱 bloquesList: $bloquesList');
-    setState(() => bloques = bloquesList);
+      print('🧱 bloquesList: $bloquesList');
+      setState(() => bloques = bloquesList);
+    }
   }
-}
-
 
   Future<void> cargarParcelas() async {
-  if (bloqueSeleccionado == null) return;
+    if (bloqueSeleccionado == null) return;
 
-  final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
-  final key = 'parcelas_${ciudadSeleccionada}_${serieSeleccionada}_$bloqueSeleccionado';
+    final hayConexion =
+        (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+    final key =
+        'parcelas_${ciudadSeleccionada}_${serieSeleccionada}_$bloqueSeleccionado';
 
-  if (hayConexion) {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('ciudades')
-        .doc(ciudadSeleccionada!)
-        .collection('series')
-        .doc(serieSeleccionada!)
-        .collection('bloques')
-        .doc(bloqueSeleccionado!)
-        .collection('parcelas')
-        .orderBy('numero')
-        .get();
+    if (hayConexion) {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('ciudades')
+              .doc(ciudadSeleccionada!)
+              .collection('series')
+              .doc(serieSeleccionada!)
+              .collection('bloques')
+              .doc(bloqueSeleccionado!)
+              .collection('parcelas')
+              .orderBy('numero')
+              .get();
 
-    final docs = snapshot.docs;
+      final docs = snapshot.docs;
 
-    if (docs.any((doc) => !doc.data().containsKey('numero_tratamiento'))) {
-      _mostrarDialogoFaltante('número de tratamiento');
-      return;
+      if (docs.any((doc) => !doc.data().containsKey('numero_tratamiento'))) {
+        _mostrarDialogoFaltante('número de tratamiento');
+        return;
+      }
+
+      setState(() => parcelas = docs);
+
+      final list =
+          docs
+              .map(
+                (doc) => {
+                  'id': doc.id,
+                  'numero': doc['numero'],
+                  'numero_tratamiento': doc['numero_tratamiento'],
+                  'numero_ficha': doc['numero_ficha'],
+                },
+              )
+              .toList();
+    } else {
+      final keyPrefix ='${ciudadSeleccionada}_${serieSeleccionada}_${bloqueSeleccionado}_';
+
+      final allKeys = _parcelasBox.keys;
+      final matchingKeys = allKeys.where((k) => k.startsWith(keyPrefix));
+
+      final list =
+          matchingKeys.map((k) {
+            final data = _parcelasBox.get(k);
+            return {
+              'id': k.split('_').last,
+              'numero': data['numero'],
+              'numero_tratamiento': data['numero_tratamiento'],
+              'numero_ficha': data['numero_ficha'],
+            };
+          }).toList();
+
+      setState(() => parcelas = list);
     }
-
-    setState(() => parcelas = docs);
-
-    final list = docs.map((doc) => {
-      'id': doc.id,
-      'numero': doc['numero'],
-      'numero_tratamiento': doc['numero_tratamiento'],
-      'numero_ficha': doc['numero_ficha'],
-    }).toList();
-
-    await _parcelasBox.put(key, list);
-  } else {
-    final local = _parcelasBox.get(key) ?? [];
-
-    if (local.isEmpty) {
-      _mostrarDialogoFaltante('datos guardados para este bloque');
-      return;
-    }
-
-    setState(() => parcelas = List<Map<String, dynamic>>.from(local));
   }
-}
 
-void _mostrarDialogoFaltante(String detalle) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text("⚠️ Campo faltante"),
-      content: Text("Este bloque contiene parcelas sin $detalle."),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Aceptar"),
-        ),
-      ],
-    ),
-  );
-}
-
+  void _mostrarDialogoFaltante(String detalle) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("⚠️ Campo faltante"),
+            content: Text("Este bloque contiene parcelas sin $detalle."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Aceptar"),
+              ),
+            ],
+          ),
+    );
+  }
 
   Future<void> actualizarInfoParcela(String id) async {
     final doc = parcelas.firstWhere((p) => p.id == id);
@@ -804,7 +839,8 @@ void _mostrarDialogoFaltante(String detalle) {
     final fixedValue = validValues.contains(value) ? value : null;
 
     return DropdownButtonFormField<String>(
-      value: fixedValue, // usa el valor fijo corregido
+      value: fixedValue,
+      // usa el valor fijo corregido
       isExpanded: true,
       dropdownColor: Colors.black,
       decoration: InputDecoration(
