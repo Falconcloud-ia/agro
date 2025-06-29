@@ -20,7 +20,6 @@ class FirestoreHiveSyncService {
   Box get _tratamientosBox => _hive.box('offline_tratamientos');
 
   Box get _usuarioBox => _hive.box('offline_user');
-  /// Devuelve el usuario actual almacenado en Hive como Map.
 
   /// Inicia la sincronización completa de Firestore hacia Hive.
   Future<void> syncFirestoreToHive() async {
@@ -47,18 +46,12 @@ class FirestoreHiveSyncService {
     });
   }
 
-  Future<void> _resguardarCiudad(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) async {
+  Future<void> _resguardarCiudad(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
     final ciudadId = doc.id;
     final data = _convertTimestampsToDateTime(doc.data());
 
     await _ciudadesBox.put(ciudadId, data);
     print('🌆 data from firestore Ciudad: $ciudadId → ${data['nombre']}');
-
-    final ciudadGuardada = await _ciudadesBox.get(ciudadId);
-    print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
-    );
 
     try {
       final series = await doc.reference.collection('series').get();
@@ -70,10 +63,7 @@ class FirestoreHiveSyncService {
     }
   }
 
-  Future<void> _resguardarSerie(
-    String ciudadId,
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) async {
+  Future<void> _resguardarSerie( String ciudadId,QueryDocumentSnapshot<Map<String, dynamic>> doc,) async {
     final serieId = doc.id;
     final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId};
     await _seriesBox.put('${ciudadId}_$serieId', data);
@@ -121,30 +111,20 @@ class FirestoreHiveSyncService {
       'bloqueId': bloqueId,
     };
     await _parcelasBox.put(
-      '${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
-      data,
-    );
+        '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', data);
 
-    /*try {
-      final tratamiento = await doc.reference.collection('tratamientos').doc('actual').get();
-      if (tratamiento.exists) {
-        final tData = {
-          ...?_convertTimestampsToDateTime(tratamiento.data()),
-          'ciudadId': ciudadId,
-          'serieId': serieId,
-          'bloqueId': bloqueId,
-          'parcelaId': parcelaId,
-        };
-        await _tratamientosBox.put(
-          '${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
-          tData,
-        );
-      }
-    } catch (e) {
-      print('❌ Error obteniendo tratamiento de $parcelaId: $e');
+    final tratamientos = await doc.reference.collection('tratamientos').get();
+    for (final tr in tratamientos.docs) {
+      final tratamientoData = {
+        ..._convertTimestampsToDateTime(tr.data()),
+        'ciudadId': ciudadId,
+        'serieId': serieId,
+        'bloqueId': bloqueId,
+        'parcelaId': parcelaId,
+      };
+      await _tratamientosBox.put(
+        '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', tratamientoData,);
     }
-
-     */
   }
 }
 
