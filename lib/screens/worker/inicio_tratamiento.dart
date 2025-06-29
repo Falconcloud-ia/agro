@@ -383,35 +383,63 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   Future<bool> puedeGenerarNumerosFicha() async {
     if (bloqueSeleccionado != 'A' || parcelaSeleccionada == null) return false;
 
-    final doc = parcelas.firstWhere((p) => p.id == parcelaSeleccionada);
-    final numeroParcela = doc['numero'];
-    if (numeroParcela != 1) return false;
+  // 1️⃣ Verifica que la parcela seleccionada sea la número 1
+  final doc = parcelas.firstWhere((p) => obtenerId(p) == parcelaSeleccionada);
+  final numeroParcela = int.tryParse(obtenerCampo(doc, 'numero')) ?? 0;
+  if (numeroParcela != 1) return false;
 
-    final bloquesSnapshot =
-        await FirebaseFirestore.instance
-            .collection('ciudades')
-            .doc(ciudadSeleccionada!)
-            .collection('series')
-            .doc(serieSeleccionada!)
-            .collection('bloques')
-            .get();
+  // 2️⃣ Verifica si hay conectividad
+  final hayConexion =
+      (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+
+  if (hayConexion) {
+    // 🔄 Versión online
+    final bloquesSnapshot = await FirebaseFirestore.instance
+        .collection('ciudades')
+        .doc(ciudadSeleccionada!)
+        .collection('series')
+        .doc(serieSeleccionada!)
+        .collection('bloques')
+        .get();
 
     for (var bloqueDoc in bloquesSnapshot.docs) {
-      final parcelasSnapshot =
-          await bloqueDoc.reference
-              .collection('parcelas')
-              .where('numero_ficha', isGreaterThanOrEqualTo: 1)
-              .limit(1)
-              .get();
+      final parcelasSnapshot = await bloqueDoc.reference
+          .collection('parcelas')
+          .where('numero_ficha', isGreaterThanOrEqualTo: 1)
+          .limit(1)
+          .get();
+
       if (parcelasSnapshot.docs.isNotEmpty) return false;
     }
+    return true;
+  } else {
+    // 📦 Versión offline
+    final bloqueKeys = _bloquesBox.keys.where((k) =>
+        k.contains('${ciudadSeleccionada}_${serieSeleccionada}_'));
 
+    for (final bloqueKey in bloqueKeys) {
+      final bloqueData = _bloquesBox.get(bloqueKey);
+      final bloqueId = bloqueData['bloqueId'];
+      final prefix = '${ciudadSeleccionada}_${serieSeleccionada}_${bloqueId}_';
+
+      final parcelaKeys = _parcelasBox.keys.where((k) => k.startsWith(prefix));
+      for (final key in parcelaKeys) {
+        final data = _parcelasBox.get(key);
+        if ((data['numero_ficha'] ?? 0) >= 1) {
+          return false;
+        }
+      }
+    }
     return true;
   }
+}
+
 
   Future<void> generarNumerosFicha(int numeroInicial) async {
     int contador = numeroInicial;
 
+final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+    if (hayConexion) {
     final bloquesSnapshot =
         await FirebaseFirestore.instance
             .collection('ciudades')
@@ -430,15 +458,50 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
               .get();
 
       for (var parcelaDoc in parcelasSnapshot.docs) {
-        await parcelaDoc.reference.update({'numero_ficha': contador});
+        await parcelaDoc.reference.update({'numero_ficha': contador, 'flag_sync': true});
         contador++;
       }
     }
 
-    await cargarParcelas(); // Refresca la UI
+    }else{
+      final bloquesKeys = _bloquesBox.keys
+          .where((k) => k.contains('${ciudadSeleccionada}_${serieSeleccionada}_'))
+          .toList()
+        ..sort(); // orden por clave (similar al orderBy documentId) //TODO: validar ordenamiento
+
+      for (final bloqueKey in bloquesKeys) {
+        final bloqueData = _bloquesBox.get(bloqueKey);
+        final bloqueId = bloqueData['bloqueId'];
+        final prefixParcela = '${ciudadSeleccionada}_${serieSeleccionada}_${bloqueId}_';
+
+        final parcelaKeys = _parcelasBox.keys
+            .where((k) => k.startsWith(prefixParcela))
+            .toList();
+
+        final parcelaList = parcelaKeys.map((k) {
+          final data = _parcelasBox.get(k);
+          return {
+            'key': k,
+            'numero': int.tryParse(data['numero'].toString()) ?? 0,
+            'data': data,
+          };
+        }).toList()
+          ..sort((a, b) => a['numero'].compareTo(b['numero']));
+
+        for (final parcela in parcelaList) {
+          final updatedData = Map<String, dynamic>.from(parcela['data']);
+          updatedData['numero_ficha'] = contador;
+
+          await _parcelasBox.put(parcela['key'], updatedData);
+          contador++;
+        }
+      }
+    }
+
+    await cargarParcelas(); // Refresca UI
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("✅ Números de ficha generados exitosamente"),
+        content: Text("✅ Números de ficha generados offline exitosamente"),
       ),
     );
   }

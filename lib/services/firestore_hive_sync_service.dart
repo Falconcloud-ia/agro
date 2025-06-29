@@ -53,9 +53,9 @@ class FirestoreHiveSyncService {
     await _ciudadesBox.put(ciudadId, data);
     print('🌆 data from firestore Ciudad: $ciudadId → ${data['nombre']}');
 
-    final ciudadGuardada = await _ciudadesBox.get(ciudadId);
-    print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
-    );
+    //final ciudadGuardada = await _ciudadesBox.get(ciudadId);
+    //print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
+    //);
 
     try {
       final series = await doc.reference.collection('series').get();
@@ -69,7 +69,7 @@ class FirestoreHiveSyncService {
 
   Future<void> _resguardarSerie( String ciudadId, QueryDocumentSnapshot<Map<String, dynamic>> doc,) async {
     final serieId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId};
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'flag_sync': false };
 
     await _seriesBox.put('${ciudadId}_$serieId', data);
 
@@ -89,7 +89,7 @@ class FirestoreHiveSyncService {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final bloqueId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'bloqueId': bloqueId};
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'bloqueId': bloqueId, 'flag_sync': false };
     await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
 
     try {
@@ -114,6 +114,7 @@ class FirestoreHiveSyncService {
       'ciudadId': ciudadId,
       'serieId': serieId,
       'bloqueId': bloqueId,
+      'flag_sync': false,
     };
     await _parcelasBox.put(
         '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', data);
@@ -126,6 +127,7 @@ class FirestoreHiveSyncService {
         'serieId': serieId,
         'bloqueId': bloqueId,
         'parcelaId': parcelaId,
+        'flag_sync': false,
       };
       await _tratamientosBox.put(
         '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', tratamientoData,);
