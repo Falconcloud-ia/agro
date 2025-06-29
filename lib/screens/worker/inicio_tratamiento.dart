@@ -180,32 +180,31 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     final hayConexion =
         (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
     if (hayConexion) {
-      final snapshot =
-          await FirebaseFirestore.instance
+      final snapshot = await FirebaseFirestore.instance
               .collection('ciudades')
               .doc(ciudadSeleccionada)
               .collection('series')
               .get();
-      setState(() => series = snapshot.docs);
-    } else {
-      final seriesMapList =
-          _seriesBox.keys
-              .where((key) {
-                final data = _seriesBox.get(key);
-                return data['ciudadId'] == ciudadSeleccionada;
-              })
-              .map((key) {
-                final data = _seriesBox.get(key);
-                return {
-                  'id': data['serieId'],
-                  'nombre': data['nombre'],
-                  'ciudadId': data['ciudadId'],
-                };
-              })
-              .toList();
 
-      setState(() => series = seriesMapList);
-    }
+      setState(() => series = snapshot.docs);
+    }else {
+  final seriesMapList = _seriesBox.keys
+      .where((key) => key.contains(ciudadSeleccionada))
+      .map((key) {
+        final data = _seriesBox.get(key);
+        return {
+          'id': data['serieId'],
+          'nombre': data['nombre'],
+          'ciudadId': data['ciudadId'],
+        };
+      })
+      .where((data) =>
+          data['ciudadId'] == ciudadSeleccionada) // filtro adicional para mayor seguridad
+      .toList();
+
+  print('📦 Series offline filtradas (por clave): $seriesMapList');
+  setState(() => series = seriesMapList);
+}
   }
 
   Future<void> cargarBloques() async {
@@ -225,13 +224,11 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
       final bloquesList = snapshot.docs.map((doc) => doc.id).toList();
       print('🧱 bloquesList: $bloquesList');
+
       setState(() => bloques = bloquesList);
     } else {
-      final bloquesList =
-          _bloquesBox.keys
-              .where(
-                (key) => key.contains(serieSeleccionada),
-              ) // Filtra claves que contienen el ID de la serie
+
+      final bloquesList =_bloquesBox.keys.where((key) => key.contains(serieSeleccionada)) // Filtra claves que contienen el ID de la serie
               .map((key) {
                 final data = _bloquesBox.get(key);
                 return data['bloqueId'];
@@ -249,8 +246,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final hayConexion =
         (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
-    final key =
-        'parcelas_${ciudadSeleccionada}_${serieSeleccionada}_$bloqueSeleccionado';
+    final key ='parcelas_${ciudadSeleccionada}_${serieSeleccionada}_$bloqueSeleccionado';
 
     if (hayConexion) {
       final snapshot =
@@ -270,27 +266,41 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
       if (docs.any((doc) => !doc.data().containsKey('numero_tratamiento'))) {
         _mostrarDialogoFaltante('número de tratamiento');
         return;
+        /*ANTES
+        *
+        *
+        * else {
+  final seriesMapList = _seriesBox.keys
+      .where((key) => key.contains(ciudadSeleccionada))
+      .map((key) {
+        final data = _seriesBox.get(key);
+        return {
+          'id': data['serieId'],
+          'nombre': data['nombre'],
+          'ciudadId': data['ciudadId'],
+        };
+      })
+      .where((data) =>
+          data['ciudadId'] == ciudadSeleccionada) // filtro adicional para mayor seguridad
+      .toList();
+
+  print('📦 Series offline filtradas (por clave): $seriesMapList');
+  setState(() => series = seriesMapList);
+}*/
+
+
+
+
       }
 
       setState(() => parcelas = docs);
 
-      final list =
-          docs
-              .map(
-                (doc) => {
-                  'id': doc.id,
-                  'numero': doc['numero'],
-                  'numero_tratamiento': doc['numero_tratamiento'],
-                  'numero_ficha': doc['numero_ficha'],
-                },
-              )
-              .toList();
     } else {
       final keyPrefix ='${ciudadSeleccionada}_${serieSeleccionada}_${bloqueSeleccionado}_';
-
       final allKeys = _parcelasBox.keys;
       final matchingKeys = allKeys.where((k) => k.startsWith(keyPrefix));
 
+      //TODO: Order by numero
       final list =
           matchingKeys.map((k) {
             final data = _parcelasBox.get(k);
@@ -300,7 +310,12 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
               'numero_tratamiento': data['numero_tratamiento'],
               'numero_ficha': data['numero_ficha'],
             };
-          }).toList();
+          }).toList()
+            ..sort((a, b) {
+              final aNum = int.tryParse(a['numero'].toString()) ?? 0;
+              final bNum = int.tryParse(b['numero'].toString()) ?? 0;
+              return (aNum as int).compareTo(bNum as int);
+            });;
 
       setState(() => parcelas = list);
     }

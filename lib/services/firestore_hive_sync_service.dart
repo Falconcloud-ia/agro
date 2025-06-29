@@ -63,9 +63,10 @@ class FirestoreHiveSyncService {
     }
   }
 
-  Future<void> _resguardarSerie( String ciudadId,QueryDocumentSnapshot<Map<String, dynamic>> doc,) async {
+  Future<void> _resguardarSerie( String ciudadId, QueryDocumentSnapshot<Map<String, dynamic>> doc,) async {
     final serieId = doc.id;
     final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId};
+
     await _seriesBox.put('${ciudadId}_$serieId', data);
 
     try {
