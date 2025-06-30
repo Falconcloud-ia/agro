@@ -155,7 +155,9 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('App Principal')),
-      body: const Center(child: Text('Esperando cronjob...')),
+      body: const Center(
+        child: Text('Sincronización programada. Revisa la consola para el avance.'),
+      ),
     );
   }
 }
