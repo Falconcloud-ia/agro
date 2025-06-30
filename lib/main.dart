@@ -7,6 +7,7 @@ import 'config/hive_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controlgestionagro/services/offline_sync_service.dart';
+import 'cron/cron_resguardar.dart';
 import 'firebase_options.dart';
 import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';
@@ -34,6 +35,9 @@ void main() async {
 
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
+
+  // 🕒 Inicia la tarea periódica en segundo plano
+  await initializeCron();
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');
