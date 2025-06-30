@@ -53,18 +53,18 @@ class FirestoreHiveSyncService {
     await _ciudadesBox.put(ciudadId, data);
     print('🌆 data from firestore Ciudad: $ciudadId → ${data['nombre']}');
 
-    //final ciudadGuardada = await _ciudadesBox.get(ciudadId);
-    //print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
-    //);
+    final ciudadGuardada = await _ciudadesBox.get(ciudadId);
+    print('💾 Ciudad guardada en Hive: $ciudadId → ${ciudadGuardada.map((k, v) => MapEntry(k, v.toString()))}',
+    );
 
-    try {
-      final series = await doc.reference.collection('series').get();
-      for (final serie in series.docs) {
-        await _resguardarSerie(ciudadId, serie);
-      }
-    } catch (e) {
-      print('❌ Error obteniendo series de $ciudadId: $e');
-    }
+    //try {
+    //  final series = await doc.reference.collection('series').get();
+    //  for (final serie in series.docs) {
+    //    await _resguardarSerie(ciudadId, serie);
+    //  }
+    //} catch (e) {
+    //  print('❌ Error obteniendo series de $ciudadId: $e');
+    //}
   }
 
   Future<void> _resguardarSerie( String ciudadId, QueryDocumentSnapshot<Map<String, dynamic>> doc,) async {
