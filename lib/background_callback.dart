@@ -1,26 +1,29 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/widgets.dart';
+
+import 'config/hive_config.dart';
+import 'firebase_options.dart';
+import 'services/firestore_hive_sync_service.dart';
+
+/// Callback que se ejecuta desde un `AlarmManager` en Android.
+///
+/// Al iniciarse cada minuto, inicializa Firebase y Hive en segundo plano
+/// para luego sincronizar los datos de Firestore hacia Hive.
 void backgroundCallbackDispatcher() {
-  // Necesitas acceso a BuildContext, así que haz esto:
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final context = navigatorKey.currentContext;
-    if (context != null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('🚀 Notificación'),
-          content: const Text('Hola Benjamín'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
+  WidgetsFlutterBinding.ensureInitialized();
+
+  print('Ejecutando proceso batch');
+
+  // Ejecutamos la sincronización de forma asíncrona para no bloquear
+  // la inicialización del isolate de Flutter.
+  Future(() async {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await HiveConfig.init();
+    await syncFirestoreToHive();
   });
 }
 
-// GlobalKey para acceder al context desde cualquier lugar
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

@@ -20,7 +20,7 @@ class MainActivity : FlutterActivity() {
         alarmManager.setRepeating(
             AlarmManager.ELAPSED_REALTIME_WAKEUP,
             SystemClock.elapsedRealtime() + 60_000,
-            15 * 60_000,
+            60_000,
             pendingIntent
         )
     }
