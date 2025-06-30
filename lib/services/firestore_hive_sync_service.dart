@@ -1,4 +1,3 @@
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive/hive.dart';
 import '../data/hive_repository.dart';
@@ -44,8 +43,6 @@ Future<void> _resguardarCiudad(QueryDocumentSnapshot<Map<String, dynamic>> doc) 
   } catch (e) {
     print('❌ Error obteniendo series de $ciudadId: $e');
   }
-  AndroidAlarmManager.cancel(111);
-
 }
 
 Future<void> _resguardarSerie(
