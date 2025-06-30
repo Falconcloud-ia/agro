@@ -1,34 +1,14 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services") // 🔹 Plugin de Firebase
-}
-
-// 🔐 Cargar propiedades de la firma desde key.properties
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
     namespace = "com.example.controlgestionagro"
-    compileSdk = 35
-    ndkVersion = "27.0.12077973" // ✅ NDK actualizado
-
-    defaultConfig {
-        applicationId = "com.example.ensayotratamientoagro"
-        minSdk = 23 // ✅ SDK mínimo compatible con Firebase Auth
-        targetSdk = 35
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-        multiDexEnabled = true
-    }
-
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = "27.0.12077973"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -38,45 +18,26 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    // ✅ TEMPORALMENTE COMENTADO - signing configs
-    /*
-    signingConfigs {
-        create("release") {
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-        }
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.controlgestionagro"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = 23
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
-    */
 
     buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-            isShrinkResources = false
-            // ✅ Usar debug signing por ahora
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-        }
-    }
-}
-
-afterEvaluate {
-    tasks.named("assembleRelease") {
-        doLast {
-            val apkSrc = file("$buildDir/outputs/apk/release/app-release.apk")
-            val apkDstDir = file("$buildDir/outputs/flutter-apk")
-            apkDstDir.mkdirs()
-            val apkDst = File(apkDstDir, "app-release.apk")
-            if (apkSrc.exists()) {
-                apkSrc.copyTo(apkDst, overwrite = true)
-                println("✅ APK copiado a: ${apkDst.absolutePath}")
-            } else {
-                println("⚠️ APK no encontrado en: ${apkSrc.absolutePath}")
-            }
         }
     }
 }
 
 flutter {
     source = "../.."
-} 
+}
