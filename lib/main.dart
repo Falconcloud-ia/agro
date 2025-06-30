@@ -11,6 +11,10 @@ import 'firebase_options.dart';
 import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';
 import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'background_callback.dart';
 
 /// 🔄 Escucha el estado de conexión para fines de depuración o sincronización
 void monitorConexion() {
@@ -33,6 +37,12 @@ void main() async {
 
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
+
+  await AndroidAlarmManager.initialize();
+  if (!kIsWeb && Platform.isAndroid) {
+    await AndroidAlarmManager.periodic(
+        const Duration(minutes: 1), 0, backgroundCallbackDispatcher);
+  }
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');

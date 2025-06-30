@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+@pragma('vm:entry-point')
 void backgroundCallbackDispatcher() {
-
-  //Imprimir aquí un print que indique que la tarea repetitiva está ejecutando
+  print('proceso repetitivo');
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
