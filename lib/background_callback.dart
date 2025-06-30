@@ -1,26 +1,8 @@
-import 'package:flutter/material.dart';
-
+/// Callback que se ejecuta desde un `AlarmManager` en Android.
+///
+/// Este código es invocado incluso si la aplicación no está en primer plano,
+/// por lo que simplemente imprime un mensaje para efectos de depuración.
 void backgroundCallbackDispatcher() {
-  // Necesitas acceso a BuildContext, así que haz esto:
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final context = navigatorKey.currentContext;
-    if (context != null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('🚀 Notificación'),
-          content: const Text('Hola Benjamín'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
-  });
+  print('Ejecutando proceso batch');
 }
 
-// GlobalKey para acceder al context desde cualquier lugar
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
