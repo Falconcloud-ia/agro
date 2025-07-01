@@ -42,15 +42,11 @@ void main() async {
   await AndroidAlarmManager.initialize();
 
   if (!kIsWeb && Platform.isAndroid) {
-    await AndroidAlarmManager.oneShot(
-      const Duration(seconds: 1),
-      0, // ID
-      backgroundCallbackDispatcher,
-      exact: true, // intenta que sea lo más preciso posible
-      wakeup: true, // despierta el dispositivo si está dormido
-    );
-
-    await AndroidAlarmManager.periodic(const Duration(minutes: 15), 0, backgroundCallbackDispatcher);
+    //exact: true, // intenta que sea lo más preciso posible
+    //wakeup: true, // despierta el dispositivo si está dormido
+    await AndroidAlarmManager.oneShot(const Duration(seconds: 1),0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
+    //Agregar tiempo
+    await AndroidAlarmManager.periodic(const Duration(minutes: 20), 0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
   }
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
