@@ -14,7 +14,7 @@ import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'background_callback.dart';
+import 'batch_procesor.dart';
 
 /// 🔄 Escucha el estado de conexión para fines de depuración o sincronización
 void monitorConexion() {
@@ -38,10 +38,19 @@ void main() async {
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
 
+  //Android_alarm
   await AndroidAlarmManager.initialize();
+
   if (!kIsWeb && Platform.isAndroid) {
-    await AndroidAlarmManager.periodic(
-        const Duration(minutes: 1), 0, backgroundCallbackDispatcher);
+    await AndroidAlarmManager.oneShot(
+      const Duration(seconds: 1),
+      0, // ID
+      backgroundCallbackDispatcher,
+      exact: true, // intenta que sea lo más preciso posible
+      wakeup: true, // despierta el dispositivo si está dormido
+    );
+
+    await AndroidAlarmManager.periodic(const Duration(minutes: 15), 0, backgroundCallbackDispatcher);
   }
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
