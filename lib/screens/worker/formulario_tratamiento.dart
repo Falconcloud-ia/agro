@@ -33,6 +33,7 @@ class FormularioTratamiento extends StatefulWidget {
 
   @override
   State<FormularioTratamiento> createState() => _FormularioTratamientoState();
+
 }
 
 class _FormularioTratamientoState extends State<FormularioTratamiento> {
@@ -385,14 +386,14 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     if (online) {
       try {
         final bloquesSnap =
-            await FirebaseFirestore.instance
-                .collection('ciudades')
-                .doc(widget.ciudadId)
-                .collection('series')
-                .doc(widget.serieId)
-                .collection('bloques')
-                .orderBy('nombre')
-                .get();
+        await FirebaseFirestore.instance
+            .collection('ciudades')
+            .doc(widget.ciudadId)
+            .collection('series')
+            .doc(widget.serieId)
+            .collection('bloques')
+            .orderBy('nombre')
+            .get();
 
         List<dynamic> bloquesParaHive = [];
         List<dynamic> parcelasParaHive = [];
@@ -407,10 +408,10 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
           bloquesParaHive.add({'id': bloqueId, 'nombre': nombreBloque});
 
           final parcelasSnap =
-              await bloque.reference
-                  .collection('parcelas')
-                  .orderBy('numero')
-                  .get();
+          await bloque.reference
+              .collection('parcelas')
+              .orderBy('numero')
+              .get();
 
           for (final p in parcelasSnap.docs) {
             final data = p.data();
@@ -429,27 +430,34 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
       } catch (e) {
         print("❌ Error online al cargar parcelas: $e");
       }
-    } else {
-      // 📴 Modo offline
-      final bloquesOffline = box.get(claveBloques) ?? [];
-      final parcelasOffline = box.get(claveParcelas) ?? [];
+    } // 📴 Modo offline
+    final bloquesOffline = box.get(claveBloques) ?? [];
+    final parcelasOfflineRaw = box.get(claveParcelas) ?? [];
 
-      for (final bloque in bloquesOffline) {
-        nombresBloques[bloque['id']] = bloque['nombre'];
-      }
-
-      todasParcelas = parcelasOffline;
+    for (final bloque in bloquesOffline) {
+      nombresBloques[bloque['id']] = bloque['nombre'];
     }
+
+    final parcelasOffline = parcelasOfflineRaw.map((data) {
+      final bloqueId = data['bloque'] ?? widget.bloqueId;
+      return {
+        ...data,
+        'bloque': bloqueId,
+      };
+    }).toList();
+
+    todasParcelas = parcelasOffline;
+
 
     // 🔥 Buscamos la posición exacta combinando bloque y número de parcela
     final index = todasParcelas.indexWhere((p) {
       final data =
-          (p is DocumentSnapshot)
-              ? p.data() as Map<String, dynamic>?
-              : p as Map<String, dynamic>;
+      (p is DocumentSnapshot)
+          ? p.data() as Map<String, dynamic>?
+          : p as Map<String, dynamic>;
 
       final bloque =
-          (p is DocumentSnapshot) ? p.reference.parent.parent?.id : p['bloque'];
+      (p is DocumentSnapshot) ? p.reference.parent.parent?.id : p['bloque'];
 
       return bloque == widget.bloqueId &&
           int.tryParse(data?['numero']?.toString() ?? '') ==

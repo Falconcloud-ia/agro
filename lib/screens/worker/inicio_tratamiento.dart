@@ -491,6 +491,9 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
         for (final parcela in parcelaList) {
           final updatedData = Map<String, dynamic>.from(parcela['data']);
           updatedData['numero_ficha'] = contador;
+           
+          updatedData['flag_sync'] = true; // asegura que las parcelas actualizadas queden con su numero de ficha 
+          //Y sean detectadas luego por el servicio sync2 cuando haya conexión para ser subidas a Firestore.
 
           await _parcelasBox.put(parcela['key'], updatedData);
           contador++;
@@ -571,7 +574,8 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
       );
       return;
     }
-
+    print('▶️ Entrando a FormularioTratamiento con: '
+        'ciudad=$ciudadSeleccionada, serie=$serieSeleccionada, bloque=$bloqueSeleccionado');
     Navigator.push(
       context,
       MaterialPageRoute(
