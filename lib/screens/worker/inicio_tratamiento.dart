@@ -104,20 +104,13 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
 
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'default';
-    final firestore = FirebaseFirestore.instance;
-
     if (hayConexion) {
+      final firestore = FirebaseFirestore.instance;
       final snapshot =
           await firestore
               .collection('ciudades')
               .get(); //Obtiene ciudades desde caché almacenado en firestore para casos con o sin conxión
       setState(() => ciudades = snapshot.docs);
-
-      final ciudadMapList =
-          snapshot.docs
-              .map((doc) => {'id': doc.id, 'nombre': doc['nombre']})
-              .toList();
     } else {
       final ciudadMapList =
           _ciudadesBox.keys.map((key) {
@@ -293,12 +286,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
   print('📦 Series offline filtradas (por clave): $seriesMapList');
   setState(() => series = seriesMapList);
-}*/
-
-
-
-
-      }
+}*/}
 
       setState(() => parcelas = docs);
 
@@ -543,6 +531,7 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
   }
 
   Future<void> iniciarTratamiento() async {
+    print("Entrando a iniciar Tratamiento");
     if (ciudadSeleccionada == null ||
         serieSeleccionada == null ||
         parcelaSeleccionada == null)
@@ -884,10 +873,9 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
                         width: MediaQuery.of(context).size.width * 0.85,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed:
-                              parcelaSeleccionada != null
-                                  ? iniciarTratamiento
-                                  : null,
+
+                          onPressed: (parcelaSeleccionada != null) ? iniciarTratamiento : null,
+
                           icon: const Icon(Icons.play_arrow, size: 34),
                           label: const Text(
                             "INICIAR TOMA DE DATOS",
