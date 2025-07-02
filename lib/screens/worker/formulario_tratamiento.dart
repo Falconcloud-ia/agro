@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:hive/hive.dart';
 import 'package:controlgestionagro/data/hive_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class AlwaysDisabledFocusNode extends FocusNode {
   @override
@@ -194,7 +193,7 @@ Future<void> guardarTratamientoActual() async {
       .bloqueId}_$id';
 
   final connectivity = await Connectivity().checkConnectivity();
-  final online = connectivity != ConnectivityResult.none;
+  final online = await hasConectivity();
 
   Map<String, dynamic> tratamientoPrevio = {};
 
