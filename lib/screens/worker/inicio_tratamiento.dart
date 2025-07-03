@@ -422,7 +422,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   }
 }
 
-
   Future<void> generarNumerosFicha(int numeroInicial) async {
     int contador = numeroInicial;
 
