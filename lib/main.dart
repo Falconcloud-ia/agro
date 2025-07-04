@@ -16,15 +16,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'batch_procesor.dart';
 
-/// 🔄 Escucha el estado de conexión para fines de depuración o sincronización
-void monitorConexion() {
-  Connectivity().onConnectivityChanged.listen((result) {
-    if (result != ConnectivityResult.none) {
-      OfflineSyncService().sincronizar();
-    }
-  });
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -67,10 +58,6 @@ void main() async {
 
     print('✅ UID anónimo recuperado y persistido: ${currentUser.uid}');
   }
-
-  // 🔹 Monitorea la conexión
-  monitorConexion();
-
   runApp(const MyApp());
 }
 
