@@ -2,16 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:hive/hive.dart';
 
 class EvaluacionDanoScreen extends StatefulWidget {
-  final DocumentReference parcelaRef;
+  final DocumentReference? parcelaRef;
+  final Map<String, dynamic>? parcelaLocal;
   final int totalRaices;
   final String ciudadId;
   final String serieId;
 
   const EvaluacionDanoScreen({
     super.key,
-    required this.parcelaRef,
+    this.parcelaRef,
+    this.parcelaLocal,
     required this.totalRaices,
     required this.ciudadId,
     required this.serieId,
@@ -40,7 +43,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
   @override
   void initState() {
     super.initState();
-    cargarEvaluacionDesdeFirestore(); // <- aquí se carga la evaluación previa
+    cargarEvaluacion();
     cargarCiudadYSerie();
     cargarNombresBloques();
     cargarParcela();
@@ -103,26 +106,38 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
   }
 
   Future<void> cargarParcela() async {
-    final snap = await widget.parcelaRef.get();
-    final data = snap.data() as Map<String, dynamic>?;
+    Map<String, dynamic>? data;
+
+    if (widget.parcelaRef != null) {
+      // MODO ONLINEpush
+      try {
+        final snap = await widget.parcelaRef!.get();
+        data = snap.data() as Map<String, dynamic>?;
+      } catch (e) {
+        debugPrint('❌ Error al cargar parcela desde Firestore: $e');
+      }
+    } else if (widget.parcelaLocal != null) {
+      // MODO OFFLINE
+      data = widget.parcelaLocal!;
+    }
 
     if (data != null) {
       setState(() {
         parcelaData = data;
 
-        // Aseguramos que totalRaices refleje el valor real de Firestore
         if (parcelaData!['raicesA'] != null) {
           final raicesGuardadas =
               int.tryParse(parcelaData!['raicesA'].toString()) ?? 0;
+
           if (raicesGuardadas > 0 && raicesGuardadas != widget.totalRaices) {
-            // Aquí podrías lanzar un error o corregir
             debugPrint(
-              'Advertencia: raíz ingresada ${widget.totalRaices}, en Firestore ${raicesGuardadas}',
+              'Advertencia: raíz ingresada ${widget.totalRaices}, en datos ${raicesGuardadas}',
             );
-            // podrías actualizar widget.totalRaices o notificar al usuario
           }
         }
       });
+    } else {
+      debugPrint('⚠️ No se pudo cargar la parcela (ni online ni offline).');
     }
   }
 
@@ -178,40 +193,71 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
       if (totalEvaluadas != widget.totalRaices) {
         setState(() {
           mensaje =
-              "❌ La cantidad evaluada ($totalEvaluadas) no coincide con raíces a evaluar (${widget.totalRaices}).";
+          "❌ La cantidad evaluada ($totalEvaluadas) no coincide con raíces a evaluar (${widget.totalRaices}).";
         });
-        return; // No permitas guardar si no coinciden
+        return;
       }
 
-      double frecuencia =
-          widget.totalRaices == 0
-              ? 0.0
-              : totalEvaluadas / (widget.totalRaices * 7);
+      double frecuencia = widget.totalRaices == 0
+          ? 0.0
+          : totalEvaluadas / (widget.totalRaices * 7);
 
-      await widget.parcelaRef.update({
-        "evaluacion": evaluaciones.map(
-          (key, value) => MapEntry(key.toString(), value),
-        ),
-        "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
-        // NO toques "raicesA" aquí
-      });
+      final evaluacionMap = evaluaciones.map(
+            (key, value) => MapEntry(key.toString(), value),
+      );
+
+      if (widget.parcelaRef != null) {
+        //online: actualizar Firestore
+        await widget.parcelaRef!.update({
+          "evaluacion": evaluacionMap,
+          "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
+        });
+      } else if (widget.parcelaLocal != null) {
+        // offline guardar en Hive con flag_sync true
+        final hiveBox = Hive.box('offline_parcelas');
+
+        final bloqueId = widget.parcelaLocal!['bloqueId'];
+        final parcelaId = widget.parcelaLocal!['id'];
+        final clave = "${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId";
+
+        final Map<String, dynamic> nuevaParcela = {    //sobre escribir campos
+          ...widget.parcelaLocal!,
+          "evaluacion": evaluacionMap,
+          "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
+          "flag_sync": true,
+        };
+
+        await hiveBox.put(clave, nuevaParcela);
+      } else {
+        setState(() {
+          mensaje = "❌ No se encontró referencia de parcela para guardar.";
+        });
+        return;
+      }
 
       await player.play(AssetSource('sounds/done.mp3'));
 
       setState(() {
         evaluacionGuardada = true;
+        mensaje = "✅ Evaluación guardada correctamente";
       });
-
-      await cargarEvaluacionDesdeFirestore(); // Opcional
     } catch (e) {
       setState(() => mensaje = "❌ Error al guardar: $e");
     }
   }
 
-  Future<void> cargarEvaluacionDesdeFirestore() async {
+  Future<void> cargarEvaluacion() async {
     try {
-      final doc = await widget.parcelaRef.get();
-      final data = doc.data() as Map<String, dynamic>?;
+      Map<String, dynamic>? data;
+
+      if (widget.parcelaRef != null) {
+        // 🔹 MODO ONLINE
+        final doc = await widget.parcelaRef!.get();
+        data = doc.data() as Map<String, dynamic>?;
+      } else if (widget.parcelaLocal != null) {
+        // 🔸 MODO OFFLINE
+        data = widget.parcelaLocal;
+      }
 
       if (data != null && data['evaluacion'] != null) {
         final mapa = Map<String, dynamic>.from(data['evaluacion']);
@@ -222,6 +268,23 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } catch (e) {
       setState(() => mensaje = "❌ Error al cargar evaluación: $e");
     }
+  }
+
+  String _obtenerNombreBloque() {
+    try {
+      if (widget.parcelaRef != null) {
+        final parent = widget.parcelaRef?.parent;
+        final grandparent = parent?.parent;
+        final bloqueId = grandparent?.id;
+        return nombresBloques[bloqueId] ?? '';
+      } else if (widget.parcelaLocal != null) {
+        final bloqueId = widget.parcelaLocal!['bloqueId'];
+        return nombresBloques[bloqueId] ?? '';
+      }
+    } catch (e) {
+      return '';
+    }
+    return '';
   }
 
   void _confirmarAvance() {
@@ -323,7 +386,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "T ${parcelaData?['numero_tratamiento'] ?? ''} - BLOQUE ${nombresBloques[widget.parcelaRef.parent.parent!.id] ?? ''}",
+              "T ${parcelaData?['numero_tratamiento'] ?? ''} - BLOQUE ${_obtenerNombreBloque()}",
               style: const TextStyle(fontSize: 20, color: Colors.white),
             ),
             if (ciudad != null && serie != null)

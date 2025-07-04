@@ -3,7 +3,6 @@ import 'package:hive/hive.dart';
 
 import '../data/hive_repository.dart';
 
-
 /// Servicio encargado de respaldar en Hive toda la informacion de Firestore.
 class FirestoreHiveSyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

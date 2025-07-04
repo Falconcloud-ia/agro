@@ -241,50 +241,62 @@ Future<void> guardarTratamientoActual() async {
 }
 
 Future<void> cargarTratamientoActual() async {
-  if (parcelas.isEmpty) return;
+    if (parcelas.isEmpty) return;
 
-  final parcela = parcelas[currentIndex];
-  final id = (parcela is DocumentSnapshot) ? parcela.id : parcela['id'];
-  final key =
-      'tratamiento_${widget.ciudadId}_${widget.serieId}_${widget
-      .bloqueId}_$id';
+    final parcela = parcelas[currentIndex];
+    final String parcelaId = (parcela is DocumentSnapshot) ? parcela.id : parcela['id'];
+    final String bloqueId = (parcela is DocumentSnapshot)
+        ? parcela['bloqueId']
+        : parcela['bloqueId'];
+    final String key = 'tratamiento_${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
 
-  final connectivity = await Connectivity().checkConnectivity();
-  final online = connectivity != ConnectivityResult.none;
+    final connectivity = await Connectivity().checkConnectivity();
+    final online = connectivity != ConnectivityResult.none;
 
-  if (online && parcela is DocumentSnapshot) {
-    final doc =
-    await parcela.reference
-        .collection('tratamientos')
-        .doc('actual')
-        .get();
-    if (doc.exists) {
-      final data = doc.data()!;
-      cargarEnControladores(data);
-      return;
+    final hiveBox = Hive.box('offline_tratamientos');
+
+    if (online && parcela is DocumentSnapshot) {
+      try {
+        final doc = await parcela.reference.collection('tratamientos').doc('actual').get();
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null) {
+            cargarEnControladores(data);
+            debugPrint("✅ Tratamiento cargado desde Firestore");
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("❌ Error al cargar tratamiento online: $e");
+      }
+    }
+
+    try {
+      final data = hiveBox.get(key);
+      if (data != null) {
+        cargarEnControladores(data);
+        debugPrint("📦 Tratamiento cargado desde Hive (offline)");
+      } else {
+        limpiarFormulario();
+        debugPrint("ℹ️ No hay tratamiento guardado en Hive para $key");
+      }
+    } catch (e) {
+      debugPrint("❌ Error al cargar tratamiento desde Hive: $e");
+      limpiarFormulario();
     }
   }
 
-  final data = hiveBox.get(key);
-  if (data != null) {
-    cargarEnControladores(data);
-  } else {
-    limpiarFormulario();
+  void cargarEnControladores(Map<String, dynamic> data) {
+    setState(() {
+      raicesAController.text = (data['raicesA'] ?? '').toString();
+      raicesBController.text = (data['raicesB'] ?? '').toString();
+      pesoAController.text = (data['pesoA'] ?? '').toString();
+      pesoBController.text = (data['pesoB'] ?? '').toString();
+      pesoHojasController.text = (data['pesoHojas'] ?? '').toString();
+      ndviController.text = (data['ndvi'] ?? '').toString();
+      observacionesController.text = (data['observaciones'] ?? '').toString();
+    });
   }
-}
-
-void cargarEnControladores(Map<String, dynamic> data) {
-  setState(() {
-    raicesAController.text = data['raicesA'] ?? '';
-    raicesBController.text = data['raicesB'] ?? '';
-    pesoAController.text = data['pesoA'] ?? '';
-    pesoBController.text = data['pesoB'] ?? '';
-    pesoHojasController.text = data['pesoHojas'] ?? '';
-    ndviController.text = data['ndvi'] ?? '';
-    observacionesController.text = data['observaciones'] ?? '';
-  });
-}
-
 Future<void> anteriorParcela() async {
   if (guardado) return; // 🚫 Evitar doble click mientras guarda
 
@@ -663,39 +675,36 @@ void limpiarFormulario() {
 }
 
 void irAEvaluacionDano() async {
-  final cantidadA = int.tryParse(raicesAController.text.trim()) ?? 0;
-  final cantidadB = int.tryParse(raicesBController.text.trim()) ?? 0;
-  final totalRaices = cantidadA + cantidadB;
+    final cantidadA = int.tryParse(raicesAController.text.trim()) ?? 0;
+    final cantidadB = int.tryParse(raicesBController.text.trim()) ?? 0;
+    final totalRaices = cantidadA + cantidadB;
 
-  final parcela = parcelas[currentIndex];
+    final parcela = parcelas[currentIndex];
+    final isOnline = await hasConectivity();
 
-  final resultado = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder:
-          (_) =>
-          EvaluacionDanoScreen(
-            parcelaRef: parcela.reference,
-            totalRaices: totalRaices,
-            ciudadId: widget.ciudadId,
-            serieId: widget.serieId,
-          ),
-    ),
-  );
-
-  // Puedes hacer algo al volver, como refrescar la UI
-  if (resultado == 'guardado' || resultado == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Evaluación guardada correctamente'),
-        duration: Duration(seconds: 2),
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EvaluacionDanoScreen(
+          totalRaices: totalRaices,
+          ciudadId: widget.ciudadId,
+          serieId: widget.serieId,
+          parcelaRef: isOnline ? parcela.reference : null,
+          parcelaLocal: isOnline ? null : parcela, // <- Hive
+        ),
       ),
     );
-    setState(() {
-      // Opcional: refrescar algo visual o recargar datos si quieres
-    });
+
+    if (resultado == 'guardado' || resultado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Evaluación guardada correctamente'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      setState(() {}); // Opcional: recargar UI
+    }
   }
-}
 
 @override
 Widget build(BuildContext context) {
