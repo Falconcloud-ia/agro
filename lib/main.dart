@@ -6,7 +6,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'config/hive_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:controlgestionagro/services/offline_sync_service.dart';
 import 'firebase_options.dart';
 import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';
@@ -15,15 +14,6 @@ import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'batch_procesor.dart';
-
-/// 🔄 Escucha el estado de conexión para fines de depuración o sincronización
-void monitorConexion() {
-  Connectivity().onConnectivityChanged.listen((result) {
-    if (result != ConnectivityResult.none) {
-      OfflineSyncService().sincronizar();
-    }
-  });
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,10 +57,6 @@ void main() async {
 
     print('✅ UID anónimo recuperado y persistido: ${currentUser.uid}');
   }
-
-  // 🔹 Monitorea la conexión
-  monitorConexion();
-
   runApp(const MyApp());
 }
 
