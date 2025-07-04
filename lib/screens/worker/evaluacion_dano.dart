@@ -213,7 +213,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
           "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
         });
       } else if (widget.parcelaLocal != null) {
-        // offline guardar en Hive con flag_sync true
+        // offline guardar en Hive con flagSync true
         final hiveBox = Hive.box('offline_parcelas');
 
         final bloqueId = widget.parcelaLocal!['bloqueId'];
@@ -224,7 +224,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
           ...widget.parcelaLocal!,
           "evaluacion": evaluacionMap,
           "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
-          "flag_sync": true,
+          "flagSync": true,
         };
 
         await hiveBox.put(clave, nuevaParcela);

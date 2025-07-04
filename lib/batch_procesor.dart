@@ -19,9 +19,9 @@ void backgroundCallbackDispatcher() {
 
       //Inicia proceso sync
       //valida fecha-hora ultima actualización
-          //if(now() - lastSyncDate(tabla config hive) > 20 min){ 1if
-              //if( hive.hasDataToSync){
-                  //comienza proceso subida datos hive
+          //if(now() - lastSyncDate(tabla config hive) > 30 min){
+              //if( box.sync_local.hasDataToSync == true){
+                  //comienza proceso subida datos hive a cloud
               //}
 
               //siempre ->  Ejecuta sync1
