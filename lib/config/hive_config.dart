@@ -14,6 +14,7 @@ class HiveConfig {
       Hive.openBox('offline_bloques'),
       Hive.openBox('offline_parcelas'),
       Hive.openBox('offline_tratamientos'),
+      Hive.openBox('sync_local'),
     ]);
   }
 }

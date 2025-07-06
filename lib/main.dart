@@ -6,7 +6,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'config/hive_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:controlgestionagro/services/offline_sync_service.dart';
 import 'firebase_options.dart';
 import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';

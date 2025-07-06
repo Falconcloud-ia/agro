@@ -7,7 +7,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'package:controlgestionagro/models/tratamiento_local.dart';
 import 'package:controlgestionagro/models/query_document_snapshot_fake.dart';
-import 'package:controlgestionagro/services/offline_sync_service.dart';
 import 'package:controlgestionagro/data/hive_repository.dart';
 import 'package:hive/hive.dart';
 
