@@ -5,6 +5,7 @@
 .dart_tool/
 .flutter-plugins
 .metadata
+**/.flutter-plugins-dependencies
 .flutter-plugins-dependencies
 .fvm/flutter_sdk
 .packages

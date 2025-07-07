@@ -1,3 +1,5 @@
+//TODO: Limpiar imports sin uso
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +9,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'package:controlgestionagro/models/tratamiento_local.dart';
 import 'package:controlgestionagro/models/query_document_snapshot_fake.dart';
-import 'package:controlgestionagro/services/offline_sync_service.dart';
 import 'package:controlgestionagro/data/hive_repository.dart';
 import 'package:hive/hive.dart';
 
@@ -39,11 +40,8 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   final HiveRepository hive = HiveRepository();
 
   Box get _ciudadesBox => hive.box('offline_ciudades');
-
   Box get _seriesBox => hive.box('offline_series');
-
   Box get _bloquesBox => hive.box('offline_bloques');
-
   Box get _parcelasBox => hive.box('offline_parcelas');
 
   @override
@@ -52,17 +50,25 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     cargarCiudades();
   }
 
+
+  //TODO: crear función para actualizar box: sync_local -> hasDataToSync
+
+  //TODO: crear función para indicar al menos 1 cambio local pendiente de subir
+  //en nuevo box  local
   Future<void> guardarSuperficieEnSerie() async {
     if (ciudadSeleccionada == null || serieSeleccionada == null) return;
-
     final superficie = superficieController.text.trim();
     final box = hive.box('offline_series');
     final key = 'series_$ciudadSeleccionada';
+    bool isCloudPersistence = true;
+    //true -> pendiente de subir a firestore
+    //False -> ya se persistió en firestore, se guardará local pero no quedará pendiente de subir
 
+    //TODO: generar función modular decada a consultar el estado de la coxión (hasConectivity())
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
 
-    if (hayConexion) {
+    if (hayConexion ) {
       try {
         // 🔄 Actualiza en Firestore
         await FirebaseFirestore.instance
@@ -72,32 +78,31 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
             .doc(serieSeleccionada!)
             .update({'superficie': superficie});
 
-        // 🔄 También actualiza en Hive
-        final lista = box.get(key) ?? [];
-        final actualizada =
-            (lista as List).map((e) {
-              if (e['id'] == serieSeleccionada) {
-                return {...e, 'superficie': superficie};
-              }
-              return e;
-            }).toList();
-        await box.put(key, actualizada);
+        isCloudPersistence = false;
       } catch (e) {
         print("❌ Error al guardar superficie online: $e");
       }
-    } else {
-      // 📴 Modo offline: guarda solo en Hive
-      final lista = box.get(key) ?? [];
-      final actualizada =
-          (lista as List).map((e) {
-            if (e['id'] == serieSeleccionada) {
-              return {...e, 'superficie': superficie};
-            }
-            return e;
-          }).toList();
-      await box.put(key, actualizada);
-      print("📦 Superficie guardada en Hive offline.");
     }
+    // 📴 Modo offline: guarda solo en Hive
+    final lista = box.get(key) ?? [];
+    final actualizada =
+        (lista as List).map((e) {
+          if (e['id'] == serieSeleccionada) {
+            return {...e, 'superficie': superficie, 'flagSync': isCloudPersistence};
+          }
+          return e;
+        }).toList();
+    await box.put(key, actualizada);
+
+    if(!isCloudPersistence){
+      //updateSyncLocal(true);
+      void updateSyncLocal() {
+        //-traer box
+        //-actualizar atributo hasDataToSync = true;
+      }
+    }
+    print("📦 Superficie guardada en Hive offline.");
+
   }
 
   Future<void> cargarCiudades() async {
@@ -143,16 +148,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
         final superficie = data['superficie'].toString();
         superficieController.text = superficie;
 
-        // 🔄 Guarda en Hive
-        final lista = box.get('series_$ciudadSeleccionada') ?? [];
-        final actualizada =
-            (lista as List).map((e) {
-              if (e['id'] == serieSeleccionada) {
-                return {...e, 'superficie': superficie};
-              }
-              return e;
-            }).toList();
-        await box.put('series_$ciudadSeleccionada', actualizada);
       } else {
         superficieController.text = '10';
       }
@@ -266,28 +261,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
       if (docs.any((doc) => !doc.data().containsKey('numero_tratamiento'))) {
         _mostrarDialogoFaltante('número de tratamiento');
         return;
-        /*ANTES
-        *
-        *
-        * else {
-  final seriesMapList = _seriesBox.keys
-      .where((key) => key.contains(ciudadSeleccionada))
-      .map((key) {
-        final data = _seriesBox.get(key);
-        return {
-          'id': data['serieId'],
-          'nombre': data['nombre'],
-          'ciudadId': data['ciudadId'],
-        };
-      })
-      .where((data) =>
-          data['ciudadId'] == ciudadSeleccionada) // filtro adicional para mayor seguridad
-      .toList();
-
-  print('📦 Series offline filtradas (por clave): $seriesMapList');
-  setState(() => series = seriesMapList);
-}*/}
-
+      }
       setState(() => parcelas = docs);
 
     } else {
@@ -336,7 +310,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
   Future<void> actualizarInfoParcela(String id) async {
     final doc = parcelas.firstWhere((p) => p.id == id);
     final data = doc.data() as Map<String, dynamic>?;
-
     if (data == null || !data.containsKey('numero_tratamiento')) {
       setState(() {
         numeroFicha = '';
@@ -361,7 +334,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
       );
       return;
     }
-
     setState(() {
       numeroFicha = data['numero_ficha']?.toString() ?? '';
       numeroTratamiento = data['numero_tratamiento']?.toString() ?? '';
@@ -424,6 +396,10 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
   Future<void> generarNumerosFicha(int numeroInicial) async {
     int contador = numeroInicial;
+    bool isCloudPersistence = true;
+
+    //TODO: usar función modular hasConectivity
+    //--agregar bool isCloudPersistence para indicar si se debe sincronizar
 
 final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
     if (hayConexion) {
@@ -444,10 +420,12 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
               .orderBy('numero')
               .get();
 
+      //TODO : agregar isCloudPersistence[cont]
       for (var parcelaDoc in parcelasSnapshot.docs) {
-        await parcelaDoc.reference.update({'numero_ficha': contador, 'flag_sync': true});
+        await parcelaDoc.reference.update({'numero_ficha': contador});
         contador++;
       }
+      isCloudPersistence = true;
     }
 
     }else{
@@ -478,12 +456,19 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
         for (final parcela in parcelaList) {
           final updatedData = Map<String, dynamic>.from(parcela['data']);
           updatedData['numero_ficha'] = contador;
-           
-          updatedData['flag_sync'] = true; // asegura que las parcelas actualizadas queden con su numero de ficha 
+          updatedData['flagSync'] = isCloudPersistence; // asegura que las parcelas actualizadas queden con su numero de ficha
           //Y sean detectadas luego por el servicio sync2 cuando haya conexión para ser subidas a Firestore.
 
           await _parcelasBox.put(parcela['key'], updatedData);
           contador++;
+        }
+      }
+
+      if(!isCloudPersistence){
+        //updateSyncLocal(true);
+        void updateSyncLocal() {
+          //-traer box
+          //-actualizar atributo hasDataToSync = true;
         }
       }
     }

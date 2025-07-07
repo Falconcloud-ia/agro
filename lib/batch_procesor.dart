@@ -17,29 +17,21 @@ void backgroundCallbackDispatcher() {
       await HiveConfig.init();
       //await Hive.initFlutter(); // si ya usas HiveConfig puedes llamarlo también
 
-      // Ejecuta sincronización
-      final syncService = FirestoreHiveSyncService();
-      await syncService.syncFirestoreToHive();
+      //Inicia proceso sync
+      //valida fecha-hora ultima actualización
+          //if(now() - lastSyncDate(tabla config hive) > 30 min){
+              //if( box.sync_local.hasDataToSync == true){
+                  //comienza proceso subida datos hive a cloud
+              //}
+
+              //siempre ->  Ejecuta sync1
+              final syncService = FirestoreHiveSyncService();
+              await syncService.syncFirestoreToHive();
+
     } catch (e) {
       print('❌ Error en background task: $e');
     }
   });
 }
-
-
-
-//ANDROID NETWORKING VALIDATION ANV
-/*
-import 'package:mobile_network_type/mobile_network_type.dart';
-Future<bool> esConexionMovilEstable() async {
-  final networkType = await MobileNetworkType().getNetworkType();
-
-  print('📶 Tipo de red detectada: $networkType');
-  return networkType == 'LTE' || networkType == '4G' || networkType == '5G';
-
-  -> sync_processor
-}
- */
-
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
