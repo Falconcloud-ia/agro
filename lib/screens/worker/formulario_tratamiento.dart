@@ -79,7 +79,6 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     return connectivity != ConnectivityResult.none;
   }
 
-
   Future<void> cargarCiudadYSerie() async {
     print("🔍 Iniciando carga de ciudad y serie...");
     print("🌆 widget.ciudadId: ${widget.ciudadId}");
@@ -146,8 +145,6 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
       }
     }
   }
-
-
   String obtenerCampoActual(String campo) {
     if (parcelas.isEmpty || currentIndex >= parcelas.length) {
       return '-';
@@ -172,7 +169,6 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     return '-';
   }
 
-
 String obtenerNombreBloqueActual() {
   final current = parcelas[currentIndex];
   if (current is DocumentSnapshot) {
@@ -186,102 +182,175 @@ String obtenerNombreBloqueActual() {
 }
 
 Future<void> guardarTratamientoActual() async {
-  final parcela = parcelas[currentIndex];
-  final id = (parcela is DocumentSnapshot) ? parcela.id : parcela['id'];
-  final key =
-      'tratamiento_${widget.ciudadId}_${widget.serieId}_${widget
-      .bloqueId}_$id';
-
-  final connectivity = await Connectivity().checkConnectivity();
-  final online = await hasConectivity();
-
-  Map<String, dynamic> tratamientoPrevio = {};
-
-  if (online && parcela is DocumentSnapshot) {
-    final ref = parcela.reference.collection('tratamientos').doc('actual');
-    final doc = await ref.get();
-    if (doc.exists) {
-      tratamientoPrevio = doc.data()!;
-    }
-  } else {
-    final dataOffline = hiveBox.get(key);
-    if (dataOffline != null) {
-      tratamientoPrevio = Map<String, dynamic>.from(dataOffline);
-    }
-  }
-
-  // Aquí construimos el nuevo Data respetando raíces actuales si están en los controllers
-  final nuevoData = {
-    ...tratamientoPrevio, // Copiamos todo lo anterior
-    if (raicesAController.text
-        .trim()
-        .isNotEmpty)
-      'raicesA':
-      raicesAController.text.trim(), // Solo si el usuario ingresó algo
-    if (raicesBController.text
-        .trim()
-        .isNotEmpty)
-      'raicesB': raicesBController.text.trim(),
-    'pesoA': pesoAController.text.trim(),
-    'pesoB': pesoBController.text.trim(),
-    'pesoHojas': pesoHojasController.text.trim(),
-    'ndvi': ndviController.text.trim(),
-    'observaciones': observacionesController.text.trim(),
-    'fecha': DateTime.now().toIso8601String(),
-    'sincronizado': false,
-    'usuario': userId,
-  };
-
-  if (online && parcela is DocumentSnapshot) {
-    final ref = parcela.reference.collection('tratamientos').doc('actual');
-    await ref.set(nuevoData);
-  } else {
-    await hiveBox.put(key, nuevoData);
-  }
-}
-
-Future<void> cargarTratamientoActual() async {
-    if (parcelas.isEmpty) return;
-
     final parcela = parcelas[currentIndex];
-    final String parcelaId = (parcela is DocumentSnapshot) ? parcela.id : parcela['id'];
-    final String bloqueId = (parcela is DocumentSnapshot)
-        ? parcela['bloqueId']
-        : parcela['bloqueId'];
-    final String key = 'tratamiento_${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
+    final id = (parcela is DocumentSnapshot) ? parcela.id : parcela['id'] ?? '';
 
-    final connectivity = await Connectivity().checkConnectivity();
-    final online = connectivity != ConnectivityResult.none;
+    // Obtener bloqueId de forma segura
+    late final String bloqueId;
 
-    final hiveBox = Hive.box('offline_tratamientos');
+    if (parcela is DocumentSnapshot) {
+      try {
+        bloqueId = parcela.reference.parent.parent?.id ??
+            (parcela.data() as Map<String, dynamic>)['bloqueId'] ??
+            widget.bloqueId ??
+            '';
+      } catch (e) {
+        print("🛑 Error al obtener bloqueId en guardar: $e");
+        bloqueId = widget.bloqueId ?? '';
+      }
+    } else {
+      bloqueId = parcela['bloque'] ?? parcela['bloqueId'] ?? widget.bloqueId ?? '';
+    }
+
+    if (bloqueId.isEmpty) {
+      print("❌ No se pudo determinar el bloqueId. Abortando guardado.");
+      return;
+    }
+
+    final String key = 'tratamiento_${widget.ciudadId}_${widget.serieId}_${bloqueId}_$id';
+    print("🔐 Clave generada para guardar tratamiento: $key");
+
+    final online = await hasConectivity();
+
+    Map<String, dynamic> tratamientoPrevio = {};
 
     if (online && parcela is DocumentSnapshot) {
-      try {
-        final doc = await parcela.reference.collection('tratamientos').doc('actual').get();
-        if (doc.exists) {
-          final data = doc.data();
-          if (data != null) {
-            cargarEnControladores(data);
-            debugPrint("✅ Tratamiento cargado desde Firestore");
-            return;
-          }
-        }
-      } catch (e) {
-        debugPrint("❌ Error al cargar tratamiento online: $e");
+      final ref = parcela.reference.collection('tratamientos').doc('actual');
+      final doc = await ref.get();
+      if (doc.exists) {
+        tratamientoPrevio = doc.data()!;
+      }
+    } else {
+      final dataOffline = hiveBox.get(key);
+      if (dataOffline != null) {
+        tratamientoPrevio = Map<String, dynamic>.from(dataOffline);
       }
     }
 
+    final nuevoData = {
+      ...tratamientoPrevio,
+      if (raicesAController.text.trim().isNotEmpty)
+        'raicesA': raicesAController.text.trim(),
+      if (raicesBController.text.trim().isNotEmpty)
+        'raicesB': raicesBController.text.trim(),
+      'pesoA': pesoAController.text.trim(),
+      'pesoB': pesoBController.text.trim(),
+      'pesoHojas': pesoHojasController.text.trim(),
+      'ndvi': ndviController.text.trim(),
+      'observaciones': observacionesController.text.trim(),
+      'fecha': DateTime.now().toIso8601String(),
+      'sincronizado': false,
+      'usuario': userId,
+    };
+
+    if (online && parcela is DocumentSnapshot) {
+      final ref = parcela.reference.collection('tratamientos').doc('actual');
+      await ref.set(nuevoData);
+    } else {
+      print('💾 Guardado en Hive con key: $key → $nuevoData');
+      await hiveBox.put(key, nuevoData);
+    }
+  }
+
+  Future<void> cargarTratamientoActual() async {
+    print("Iniciando carga de tratamiento actual...");
+
+    // Verifica que haya parcelas cargadas
+    if (parcelas.isEmpty) {
+      print("No hay parcelas cargadas.");
+      return;
+    }
+
+    final parcela = parcelas[currentIndex];
+
+    // Obtener ID de la parcela (soporta tanto DocumentSnapshot como mapa local)
+    //agregar validacion para ver si trar los id de la parcela en offline
+
+    final String parcelaId;
+    if (parcela is DocumentSnapshot) {
+      parcelaId = parcela.id;
+    } else if (parcela.containsKey('id') && parcela['id'] != null) {
+      parcelaId = parcela['id'];
+    } else {
+      print("No se encontró el id de la parcela en modo offline.");
+      return;
+    }
+
+    // Obtener bloqueId de forma segura
+    late final String bloqueId;
+
+    if (parcela is DocumentSnapshot) {
+      try {
+        // Se intenta obtener el ID del bloque desde Firestore
+        bloqueId = parcela.reference.parent.parent?.id ??
+            (parcela.data() as Map<String, dynamic>)['bloqueId'] ??
+            widget.bloqueId ?? '';
+      } catch (e) {
+        print("Error al obtener bloqueId desde DocumentSnapshot: $e");
+        bloqueId = widget.bloqueId ?? '';
+      }
+    } else {
+      // En modo local, se accede al campo 'bloque' o 'bloqueId' directamente
+      bloqueId = parcela['bloque'] ?? parcela['bloqueId'] ?? widget.bloqueId ?? '';
+    }
+
+    if (bloqueId.isEmpty) {
+      print("No se pudo determinar el bloqueId. Abortando carga.");
+      return;
+    }
+
+    // Se genera la clave para identificar el tratamiento en Hive
+    final String key =
+        'tratamiento_${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
+    print("Clave generada para tratamiento: $key");
+
+    final hayConexion = await hasConectivity();
+    final hiveBox = Hive.box('offline_tratamientos');
+
+    // Si hay conexión y la parcela proviene de Firestore, se intenta cargar online
+    if (hayConexion && parcela is DocumentSnapshot) {
+      try {
+        final doc = await parcela.reference
+            .collection('tratamientos')
+            .doc('actual')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          print("Tratamiento cargado online desde Firestore: $data");
+
+          // Guarda una copia del tratamiento en Hive para modo offline
+          try {
+            await hiveBox.put(key, data);
+            print("Tratamiento sincronizado y guardado en Hive con clave $key");
+          } catch (e) {
+            print("Error al guardar tratamiento en Hive: $e");
+          }
+
+          // Carga los valores en los controladores de texto
+          cargarEnControladores(data);
+          return;
+        } else {
+          print("El documento 'actual' no existe o está vacío en Firestore.");
+        }
+      } catch (e) {
+        print("Error al cargar tratamiento online: $e");
+      }
+    }
+
+    // Modo offline: intenta cargar el tratamiento desde Hive
     try {
       final data = hiveBox.get(key);
+
       if (data != null) {
+        print("Tratamiento cargado desde Hive (offline): $data");
         cargarEnControladores(data);
-        debugPrint("📦 Tratamiento cargado desde Hive (offline)");
       } else {
+        print("No hay tratamiento guardado en Hive con la clave: $key");
         limpiarFormulario();
-        debugPrint("ℹ️ No hay tratamiento guardado en Hive para $key");
       }
     } catch (e) {
-      debugPrint("❌ Error al cargar tratamiento desde Hive: $e");
+      print("Error al cargar tratamiento desde Hive: $e");
       limpiarFormulario();
     }
   }
@@ -297,6 +366,7 @@ Future<void> cargarTratamientoActual() async {
       observacionesController.text = (data['observaciones'] ?? '').toString();
     });
   }
+
 Future<void> anteriorParcela() async {
   if (guardado) return; // 🚫 Evitar doble click mientras guarda
 
@@ -403,29 +473,32 @@ void monitorConexionParaSincronizar() {
   });
 }
 
-Future<void> cargarTratamientoActualOffline() async {
-  if (parcelas.isEmpty) return;
+//trabajar en esta funcion para cargar los datos del tratamiento.
+  Future<void> cargarTratamientoActualOffline() async {
 
-  final parcela = parcelas[currentIndex];
-  final box = hive.box('offline_tratamientos');
-  final id =
-  parcela['id']; // asegúrate de guardar esto al momento de persistir
-  final data = box.get(id);
+    if (parcelas.isEmpty) return;
+    final parcela = parcelas[currentIndex];
+    final box = hive.box('offline_tratamientos');
 
-  if (data != null) {
-    setState(() {
-      raicesAController.text = data['raicesA'] ?? '';
-      raicesBController.text = data['raicesB'] ?? '';
-      pesoAController.text = data['pesoA'] ?? '';
-      pesoBController.text = data['pesoB'] ?? '';
-      pesoHojasController.text = data['pesoHojas'] ?? '';
-      ndviController.text = data['ndvi'] ?? '';
-      observacionesController.text = data['observaciones'] ?? '';
-    });
-  } else {
-    limpiarFormulario();
+    final id = parcela['id'];
+    final clave = 'tratamiento_${widget.ciudadId}_${widget.serieId}_${widget.bloqueId}_$id';
+
+    final data = box.get(clave);
+
+    if (data != null) {
+      setState(() {
+        raicesAController.text = data['raicesA'] ?? '';
+        raicesBController.text = data['raicesB'] ?? '';
+        pesoAController.text = data['pesoA'] ?? '';
+        pesoBController.text = data['pesoB'] ?? '';
+        pesoHojasController.text = data['pesoHojas'] ?? '';
+        ndviController.text = data['ndvi'] ?? '';
+        observacionesController.text = data['observaciones'] ?? '';
+      });
+    } else {
+      limpiarFormulario();
+    }
   }
-}
 
 Future<void> sincronizarTratamientosPendientes() async {
   final keys = hiveBox.keys.where(

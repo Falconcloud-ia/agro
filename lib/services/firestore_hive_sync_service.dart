@@ -105,6 +105,7 @@ class FirestoreHiveSyncService {
     final parcelaId = doc.id;
     final data = {
       ...doc.data(),
+      'id': parcelaId,
       'ciudadId': ciudadId,
       'serieId': serieId,
       'bloqueId': bloqueId,
@@ -124,7 +125,12 @@ class FirestoreHiveSyncService {
         'flagSync': false,
       };
       await _tratamientosBox.put(
-        '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', tratamientoData,);
+        'tratamiento_${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
+        tratamientoData,
+      );
+      //ver si tratamiento sincronizado a hive queda con la clave esperada
+      print('!!! Tratamiento sincronizado a Hive con clave: tratamiento_${ciudadId}_${serieId}_${bloqueId}_$parcelaId → $tratamientoData');
+
     }
   }
 }
