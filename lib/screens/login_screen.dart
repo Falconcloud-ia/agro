@@ -15,6 +15,7 @@ import 'package:hive/hive.dart';
 import 'package:controlgestionagro/models/users_local.dart';
 import 'package:controlgestionagro/services/firestore_hive_sync_service.dart';
 import 'package:controlgestionagro/screens/hive_viewer_screen.dart';
+import '../../services/hive_firestore_sync_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,13 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _inicializar() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await syncFirestoreToHive();
-    setState(() {
-      _isLoading = false;
-    });
+    setState(() => _isLoading = true);
+    final syncService = FirestoreToHiveSyncService();
+    await syncService.sync();
+    setState(() => _isLoading = false);
   }
 
   void _verificarUsuarioOperadorPersistido() async {

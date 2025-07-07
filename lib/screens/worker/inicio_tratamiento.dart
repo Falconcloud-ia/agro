@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../helpers/hive_sync_utils.dart';
 import 'formulario_tratamiento.dart';
 import '../login_screen.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -481,7 +482,7 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
           updatedData['flag_sync'] = true; // asegura que las parcelas actualizadas queden con su numero de ficha 
           //Y sean detectadas luego por el servicio sync2 cuando haya conexión para ser subidas a Firestore.
 
-          await _parcelasBox.put(parcela['key'], updatedData);
+          await HiveSyncUtils.marcarComoModificadoSoloOffline(_parcelasBox, parcela['key'], updatedData);
           contador++;
         }
       }

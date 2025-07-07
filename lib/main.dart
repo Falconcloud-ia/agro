@@ -13,7 +13,7 @@ import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
 //import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'batch_procesor.dart';
+import 'screens/batch/batch_procesor.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
