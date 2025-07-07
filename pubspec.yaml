@@ -53,10 +53,7 @@ dependencies:
 
   #android_alarm_manager_plus: ^4.0.7
   #Android networking validation ANV
-  #mobile_network_type: ^1.0.5
-
-
-
+  network_type_reachability: ^1.0.3
 
 
 dev_dependencies:

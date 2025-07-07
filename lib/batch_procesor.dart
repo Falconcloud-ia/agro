@@ -1,5 +1,6 @@
 import 'package:controlgestionagro/services/firestore_hive_sync_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:network_type_reachability/network_type_reachability.dart';
 import 'package:flutter/material.dart';
 
 import 'config/hive_config.dart';
@@ -9,6 +10,7 @@ import 'firebase_options.dart';
 void backgroundCallbackDispatcher() {
   Future.microtask(() async {
     print('⏰ Ejecutando tarea periódica...');
+
     try {
       // 🟢 Inicializa Firebase
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -33,5 +35,6 @@ void backgroundCallbackDispatcher() {
     }
   });
 }
+
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
