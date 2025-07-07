@@ -50,7 +50,7 @@ void backgroundCallbackDispatcher() {
 /// Verifica si han pasado al menos 30 minutos desde la última sincronización
 bool esHoraDeSincronizar(Box configBox) {
   final lastSync = configBox.get('lastSync') as DateTime?;
-  return lastSync == null || DateTime.now().difference(lastSync) > const Duration(minutes: 20);
+  return lastSync == null || DateTime.now().difference(lastSync) > const Duration(minutes: 2);
 }
 
 /// Guarda el timestamp actual como último sync exitoso
