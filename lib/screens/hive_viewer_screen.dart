@@ -16,14 +16,15 @@ class _HiveViewerScreenState extends State<HiveViewerScreen> {
   @override
   void initState() {
     super.initState();
-    // Lista fija de cajas utilizadas en tu app
     boxNames = [
-      'offline_user',
-      'offline_ciudades',
-      'offline_series',
-      'offline_bloques',
-      'offline_parcelas',
-      'offline_tratamientos',
+    'offline_data',
+    'user_data',
+    'offline_user',
+    'offline_ciudades',
+    'offline_series',
+    'offline_bloques',
+    'offline_parcelas',
+    'offline_tratamientos',
     ];
   }
 
