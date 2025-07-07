@@ -3,22 +3,16 @@ import 'package:hive/hive.dart';
 
 import '../data/hive_repository.dart';
 
-
 /// Servicio encargado de respaldar en Hive toda la informacion de Firestore.
 class FirestoreHiveSyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final HiveRepository _hive = HiveRepository();
 
   Box get _ciudadesBox => _hive.box('offline_ciudades');
-
   Box get _seriesBox => _hive.box('offline_series');
-
   Box get _bloquesBox => _hive.box('offline_bloques');
-
   Box get _parcelasBox => _hive.box('offline_parcelas');
-
   Box get _tratamientosBox => _hive.box('offline_tratamientos');
-
   Box get _usuarioBox => _hive.box('offline_user');
 
   /// Inicia la sincronización completa de Firestore hacia Hive.
@@ -69,7 +63,7 @@ class FirestoreHiveSyncService {
 
   Future<void> _resguardarSerie( String ciudadId, QueryDocumentSnapshot<Map<String, dynamic>> doc,) async {
     final serieId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'flag_sync': false };
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'flagSync': false };
 
     await _seriesBox.put('${ciudadId}_$serieId', data);
 
@@ -89,7 +83,7 @@ class FirestoreHiveSyncService {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) async {
     final bloqueId = doc.id;
-    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'bloqueId': bloqueId, 'flag_sync': false };
+    final data = {..._convertTimestampsToDateTime(doc.data()), 'ciudadId': ciudadId, 'serieId': serieId, 'bloqueId': bloqueId, 'flagSync': false };
     await _bloquesBox.put('${ciudadId}_${serieId}_${bloqueId}', data);
 
     try {
@@ -111,10 +105,11 @@ class FirestoreHiveSyncService {
     final parcelaId = doc.id;
     final data = {
       ...doc.data(),
+      'id': parcelaId,
       'ciudadId': ciudadId,
       'serieId': serieId,
       'bloqueId': bloqueId,
-      'flag_sync': false,
+      'flagSync': false,
     };
     await _parcelasBox.put(
         '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', data);
@@ -127,10 +122,15 @@ class FirestoreHiveSyncService {
         'serieId': serieId,
         'bloqueId': bloqueId,
         'parcelaId': parcelaId,
-        'flag_sync': false,
+        'flagSync': false,
       };
       await _tratamientosBox.put(
-        '${ciudadId}_${serieId}_${bloqueId}_$parcelaId', tratamientoData,);
+        'tratamiento_${ciudadId}_${serieId}_${bloqueId}_$parcelaId',
+        tratamientoData,
+      );
+      //ver si tratamiento sincronizado a hive queda con la clave esperada
+      print('!!! Tratamiento sincronizado a Hive con clave: tratamiento_${ciudadId}_${serieId}_${bloqueId}_$parcelaId → $tratamientoData');
+
     }
   }
 }

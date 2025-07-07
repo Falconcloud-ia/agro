@@ -6,12 +6,11 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'config/hive_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:controlgestionagro/services/offline_sync_service.dart';
 import 'firebase_options.dart';
 import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';
 import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+//import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'batch_procesor.dart';
@@ -29,16 +28,16 @@ void main() async {
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
 
+  /*
   //Android_alarm
-  await AndroidAlarmManager.initialize();
-
+  //await AndroidAlarmManager.initialize();
   if (!kIsWeb && Platform.isAndroid) {
     //exact: true, // intenta que sea lo más preciso posible
     //wakeup: true, // despierta el dispositivo si está dormido
     await AndroidAlarmManager.oneShot(const Duration(seconds: 1),0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
     //Agregar tiempo
     await AndroidAlarmManager.periodic(const Duration(minutes: 20), 0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
-  }
+  }*/
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');
