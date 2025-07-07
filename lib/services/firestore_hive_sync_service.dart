@@ -40,8 +40,6 @@ class FirestoreToHiveSyncService extends BaseSyncService {
     };
     await seriesBox.put('${ciudadId}_$serieId', data);
 
-    await _seriesBox.put('${ciudadId}_$serieId', data);
-
     try {
       final bloques = await doc.reference.collection('bloques').get();
       for (final bloque in bloques.docs) {
@@ -97,9 +95,4 @@ class FirestoreToHiveSyncService extends BaseSyncService {
       await tratamientosBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', trData);
     }
   }
-}
-
-/// Función de conveniencia para iniciar la sincronización.
-Future<void> syncFirestoreToHive() {
-  return FirestoreHiveSyncService().syncFirestoreToHive();
 }
