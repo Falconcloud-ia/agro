@@ -54,7 +54,7 @@ dependencies:
   android_alarm_manager_plus: ^4.0.7
 
   #Android networking validation ANV
-  network_type_reachability: ^1.0.3
+  #network_type_reachability: ^1.0.3
 
 
 

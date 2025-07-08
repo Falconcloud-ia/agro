@@ -4,15 +4,8 @@ import 'package:hive/hive.dart';
 
 import '../../config/hive_config.dart';
 import '../../firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-
-import '../../config/hive_config.dart';
-import '../../firebase_options.dart';
 import '../../services/firestore_hive_sync_service.dart';
 import '../../services/hive_firestore_sync_service.dart';
-import '../helpers/hive_sync_utils.dart';
 
 @pragma('vm:entry-point')
 void backgroundCallbackDispatcher() {
@@ -32,28 +25,24 @@ void backgroundCallbackDispatcher() {
       final cloudToHive = FirestoreToHiveSyncService();
 
       if (esHoraDeSincronizar(configBox)) {
-        if (HiveSyncUtils.hayDatosParaSincronizar()) {
-          await hiveToCloud.sync(); // SYNC2
-          await HiveSyncUtils.desactivarFlagGlobal(); // Reset
-        }
-
-        await cloudToHive.sync(); // SYNC1
+        await hiveToCloud.sync();   // SYNC2
+        await cloudToHive.sync();   // SYNC1
         actualizarHoraSync(configBox);
       }
-
     } catch (e, stack) {
       print('❌ Error en backgroundCallbackDispatcher: $e\n$stack');
     }
   });
 }
 
-/// Verifica si han pasado al menos 30 minutos desde la última sincronización
+/// Evalúa si han pasado más de 30 minutos desde la última sincronización
 bool esHoraDeSincronizar(Box configBox) {
   final lastSync = configBox.get('lastSync') as DateTime?;
-  return lastSync == null || DateTime.now().difference(lastSync) > const Duration(minutes: 2);
+  //return lastSync == null || DateTime.now().difference(lastSync) > Duration(minutes: 30);
+  return 1 == 1;
 }
 
-/// Guarda el timestamp actual como último sync exitoso
+/// Actualiza el timestamp de la última sincronización
 void actualizarHoraSync(Box configBox) {
   configBox.put('lastSync', DateTime.now());
 }
