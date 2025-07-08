@@ -7,6 +7,8 @@ class HiveConfig {
     await Hive.initFlutter();
     await Future.wait([
       Hive.openBox('offline_data'),
+      Hive.openBox('user_data'),
+      Hive.openBox('offline_user'),
       Hive.openBox('offline_ciudades'),
       Hive.openBox('offline_series'),
       Hive.openBox('offline_bloques'),

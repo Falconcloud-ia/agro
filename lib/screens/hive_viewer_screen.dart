@@ -17,13 +17,13 @@ class _HiveViewerScreenState extends State<HiveViewerScreen> {
   void initState() {
     super.initState();
     boxNames = [
-    'sync_local',
     'offline_user',
     'offline_ciudades',
     'offline_series',
     'offline_bloques',
     'offline_parcelas',
     'offline_tratamientos',
+    'sync_local',
     ];
   }
 

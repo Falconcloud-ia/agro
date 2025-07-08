@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'base_sync_service.dart';
 
 class FirestoreToHiveSyncService extends BaseSyncService {

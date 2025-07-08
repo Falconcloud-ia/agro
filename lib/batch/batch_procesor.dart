@@ -25,9 +25,14 @@ void backgroundCallbackDispatcher() {
       final cloudToHive = FirestoreToHiveSyncService();
 
       if (esHoraDeSincronizar(configBox)) {
+        print('Comienza sync');
+
         await hiveToCloud.sync();   // SYNC2
         await cloudToHive.sync();   // SYNC1
         actualizarHoraSync(configBox);
+      }else{
+        print('❌ Error en backgroundCallbackDispatcher no sync');
+
       }
     } catch (e, stack) {
       print('❌ Error en backgroundCallbackDispatcher: $e\n$stack');
