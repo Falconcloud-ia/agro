@@ -11,7 +11,7 @@ abstract class BaseSyncService {
   Box get bloquesBox => hive.box('offline_bloques');
   Box get parcelasBox => hive.box('offline_parcelas');
   Box get tratamientosBox => hive.box('offline_tratamientos');
-  Box get usuarioBox => hive.box('offline_data');
+  Box get configBox => hive.box('sync_local');
 
   Map<String, dynamic> convertTimestamps(Map<String, dynamic> data) {
     return data.map((key, value) =>
