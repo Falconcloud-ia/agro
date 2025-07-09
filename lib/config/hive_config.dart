@@ -5,6 +5,10 @@ class HiveConfig {
   /// Inicializa Hive y abre las cajas necesarias.
   static Future<void> init() async {
     await Hive.initFlutter();
+    await openBoxes();
+  }
+
+  static Future<void> openBoxes() async {
     await Future.wait([
       Hive.openBox('offline_data'),
       Hive.openBox('user_data'),

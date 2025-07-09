@@ -12,7 +12,6 @@ import 'firebase_options.dart';
 import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';
 import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
-//import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -42,6 +41,7 @@ void main() async {
     //Agregar tiempo
     await AndroidAlarmManager.periodic(const Duration(minutes: 2), 0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
   }
+
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');

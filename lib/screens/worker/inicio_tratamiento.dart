@@ -53,15 +53,16 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
 
   //TODO: crear función para actualizar box: sync_local -> hasDataToSync
-
   //TODO: crear función para indicar al menos 1 cambio local pendiente de subir
   //en nuevo box  local
   Future<void> guardarSuperficieEnSerie() async {
-    if (ciudadSeleccionada == null || serieSeleccionada == null) return;
+    if (ciudadSeleccionada == null || serieSeleccionada == null) return; //termina
+
     final superficie = superficieController.text.trim();
     final box = hive.box('offline_series');
-    final key = 'series_$ciudadSeleccionada';
-    bool isCloudPersistence = true;
+    final key = '${ciudadSeleccionada}_$serieSeleccionada';
+    bool persistioEnFirestore = false;
+
     //true -> pendiente de subir a firestore
     //False -> ya se persistió en firestore, se guardará local pero no quedará pendiente de subir
 
@@ -78,24 +79,17 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
             .collection('series')
             .doc(serieSeleccionada!)
             .update({'superficie': superficie});
-
-        isCloudPersistence = false;
+        persistioEnFirestore = true;
       } catch (e) {
         print("❌ Error al guardar superficie online: $e");
       }
     }
-    // 📴 Modo offline: guarda solo en Hive
-    final lista = box.get(key) ?? [];
-    final actualizada =
-        (lista as List).map((e) {
-          if (e['id'] == serieSeleccionada) {
-            return {...e, 'superficie': superficie, 'flagSync': isCloudPersistence};
-          }
-          return e;
-        }).toList();
-    await box.put(key, actualizada);
 
-    if(!isCloudPersistence){
+    final serieData = box.get(key) ?? [];
+    final serieSuperficie = {...serieData, 'superficie': superficie, 'flag_sync': !persistioEnFirestore};
+    await box.put(key, serieSuperficie);
+
+    if(!persistioEnFirestore){
       //updateSyncLocal(true);
       void updateSyncLocal() {
         //-traer box
@@ -457,7 +451,7 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
         for (final parcela in parcelaList) {
           final updatedData = Map<String, dynamic>.from(parcela['data']);
           updatedData['numero_ficha'] = contador;
-          updatedData['flagSync'] = isCloudPersistence; // asegura que las parcelas actualizadas queden con su numero de ficha
+          updatedData['flag_sync'] = isCloudPersistence; // asegura que las parcelas actualizadas queden con su numero de ficha
           //Y sean detectadas luego por el servicio sync2 cuando haya conexión para ser subidas a Firestore.
 
           await HiveSyncUtils.marcarComoModificadoSoloOffline(_parcelasBox, parcela['key'], updatedData);

@@ -6,26 +6,32 @@ import '../../config/hive_config.dart';
 import '../../firebase_options.dart';
 import '../../services/firestore_hive_sync_service.dart';
 import '../../services/hive_firestore_sync_service.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
 
 @pragma('vm:entry-point')
 void backgroundCallbackDispatcher() {
   Future.microtask(() async {
     print('⏰ Ejecutando tarea periódica...');
+
     try {
       // Inicializar Firebase
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-      // Inicializar Hive
-      await HiveConfig.init();
+      // 🔹 Inicializar Hive con path manual
+      final dir = await path_provider.getApplicationDocumentsDirectory();
+      Hive.init(dir.path);
 
-      // Acceder al box de configuración
+      // 🔹 Abrir cajas necesarias
+      await HiveConfig.openBoxes();
+
+      // 🔹 Acceder a la configuración de sincronización
       final configBox = Hive.box('sync_local');
 
       final hiveToCloud = HiveToFirestoreSyncService();
       final cloudToHive = FirestoreToHiveSyncService();
 
       if (esHoraDeSincronizar(configBox)) {
-        print('Comienza sync');
+        print('✅ Comienza sincronización');
 
         await hiveToCloud.sync();   // SYNC2
         await cloudToHive.sync();   // SYNC1
@@ -51,5 +57,3 @@ bool esHoraDeSincronizar(Box configBox) {
 void actualizarHoraSync(Box configBox) {
   configBox.put('lastSync', DateTime.now());
 }
-
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
