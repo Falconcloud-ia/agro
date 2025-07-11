@@ -96,7 +96,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
         //-actualizar atributo hasDataToSync = true;
       }
     }
-    print("📦 Superficie guardada en Hive offline.");
+    print("📦 Superficie guardada en Hive con flag_sync: " + '${!persistioEnFirestore}' );
 
   }
 

@@ -50,6 +50,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _inicializar() async {
     setState(() => _isLoading = true);
+    final hiveToCloud = HiveToFirestoreSyncService();
+    await hiveToCloud.sync();
+
     final syncService = FirestoreToHiveSyncService();
     await syncService.sync();
     setState(() => _isLoading = false);

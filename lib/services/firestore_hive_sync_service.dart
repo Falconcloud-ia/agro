@@ -24,7 +24,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
     final ciudadId = doc.id;
     final data = convertTimestamps(doc.data());
 
-    await ciudadesBox.put(ciudadId, {...data, 'flag_sync': false});
+    await ciudadesBox.put(ciudadId, {...data});
     print('🌆 Ciudad guardada: $ciudadId');
 
     final series = await doc.reference.collection('series').get();
