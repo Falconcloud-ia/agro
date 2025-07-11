@@ -81,6 +81,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
       'ciudadId': ciudadId,
       'serieId': serieId,
       'bloqueId': bloqueId,
+      'parcelaId': parcelaId,
       'flag_sync': false,
     };
     await parcelasBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', data);
@@ -93,6 +94,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
         'serieId': serieId,
         'bloqueId': bloqueId,
         'parcelaId': parcelaId,
+        'tratamientoId': tr.id,
         'flag_sync': false,
       };
       await tratamientosBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', trData);

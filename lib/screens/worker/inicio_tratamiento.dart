@@ -413,7 +413,12 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
           for (var parcelaDoc in parcelasSnapshot.docs) {
             // 🔁 Actualizar en Firestore
-            await parcelaDoc.reference.update({'numero_ficha': contador});
+            try {
+              await parcelaDoc.reference.update({'numero_ficha': contador});
+              isCloudPersistence = true;
+            } catch (e) {
+              print('❌ Error al actualizar numero_ficha: $e');
+            }
 
             // 📦 También actualizar en Hive
             final bloqueId = bloqueDoc.id;
@@ -423,55 +428,55 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
             final updatedData = Map<String, dynamic>.from(dataLocal);
             updatedData['numero_ficha'] = contador;
-            updatedData['flag_sync'] = false; // ya fue subido
+            updatedData['flag_sync'] = !isCloudPersistence;
             await _parcelasBox.put(keyHive, updatedData);
-
             contador++;
+            isCloudPersistence = false;
+
           }
         }
 
-        isCloudPersistence = true;
       } catch (e) {
         print("❌ Error al guardar en Firestore: $e");
         isCloudPersistence = false; // por si falla durante ejecución
       }
-    }
+    }else {
+      // 🔁 Siempre actualizar Hive (también si no hay conexión)
+      final bloquesKeys = _bloquesBox.keys
+          .where((k) =>
+          k.contains('${ciudadSeleccionada}_${serieSeleccionada}_'))
+          .toList()
+        ..sort(); // Asegura orden
+      contador = numeroInicial;
 
-    // 🔁 Siempre actualizar Hive (también si no hay conexión)
-    final bloquesKeys = _bloquesBox.keys
-        .where((k) => k.contains('${ciudadSeleccionada}_${serieSeleccionada}_'))
-        .toList()
-      ..sort(); // Asegura orden
+      for (final bloqueKey in bloquesKeys) {
+        final bloqueData = _bloquesBox.get(bloqueKey);
+        final bloqueId = bloqueData['bloqueId'];
+        final prefixParcela = '${ciudadSeleccionada}_${serieSeleccionada}_${bloqueId}_';
 
-    for (final bloqueKey in bloquesKeys) {
-      final bloqueData = _bloquesBox.get(bloqueKey);
-      final bloqueId = bloqueData['bloqueId'];
-      final prefixParcela = '${ciudadSeleccionada}_${serieSeleccionada}_${bloqueId}_';
+        final parcelaKeys = _parcelasBox.keys
+            .where((k) => k.startsWith(prefixParcela))
+            .toList();
 
-      final parcelaKeys = _parcelasBox.keys
-          .where((k) => k.startsWith(prefixParcela))
-          .toList();
+        final parcelaList = parcelaKeys.map((k) {
+          final data = _parcelasBox.get(k);
+          return {
+            'key': k,
+            'numero': int.tryParse(data['numero'].toString()) ?? 0,
+            'data': data,
+          };
+        }).toList()
+          ..sort((a, b) => a['numero'].compareTo(b['numero']));
 
-      final parcelaList = parcelaKeys.map((k) {
-        final data = _parcelasBox.get(k);
-        return {
-          'key': k,
-          'numero': int.tryParse(data['numero'].toString()) ?? 0,
-          'data': data,
-        };
-      }).toList()
-        ..sort((a, b) => a['numero'].compareTo(b['numero']));
-
-      // Si ya se procesó online, evitamos doble asignación
-      if (!isCloudPersistence) {
-        contador = numeroInicial;
-
-        for (final parcela in parcelaList) {
-          final updatedData = Map<String, dynamic>.from(parcela['data']);
-          updatedData['numero_ficha'] = contador;
-          updatedData['flag_sync'] = true; // pendiente de subir
-          await _parcelasBox.put(parcela['key'], updatedData);
-          contador++;
+        // Si ya se procesó online, evitamos doble asignación
+        if (!isCloudPersistence) {
+          for (final parcela in parcelaList) {
+            final updatedData = Map<String, dynamic>.from(parcela['data']);
+            updatedData['numero_ficha'] = contador;
+            updatedData['flag_sync'] = true; // pendiente de subir
+            await _parcelasBox.put(parcela['key'], updatedData);
+            contador++;
+          }
         }
       }
     }
