@@ -262,23 +262,23 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
       final keyPrefix ='${ciudadSeleccionada}_${serieSeleccionada}_${bloqueSeleccionado}_';
       final allKeys = _parcelasBox.keys;
       final matchingKeys = allKeys.where((k) => k.startsWith(keyPrefix));
-
+//revisar 11/07
       //TODO: Order by numero
       final list =
           matchingKeys.map((k) {
             final data = _parcelasBox.get(k);
             return {
-              'id': k.split('_').last,
+              'id': k.split('_').last,//parcelaId? agregar ?
               'numero': data['numero'],
               'numero_tratamiento': data['numero_tratamiento'],
               'numero_ficha': data['numero_ficha'],
             };
           }).toList()
             ..sort((a, b) {
-              final aNum = int.tryParse(a['numero'].toString()) ?? 0;
-              final bNum = int.tryParse(b['numero'].toString()) ?? 0;
-              return (aNum as int).compareTo(bNum as int);
-            });;
+              final aTrat = int.tryParse(a['numero_tratamiento'].toString()) ?? 0;
+              final bTrat = int.tryParse(b['numero_tratamiento'].toString()) ?? 0;
+              return aTrat.compareTo(bTrat);
+            });
 
       setState(() => parcelas = list);
     }

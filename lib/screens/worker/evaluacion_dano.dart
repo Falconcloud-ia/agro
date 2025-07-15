@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:hive/hive.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 class EvaluacionDanoScreen extends StatefulWidget {
   final DocumentReference? parcelaRef;
@@ -67,30 +69,105 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     );
   }
 
+  Future<bool> hasConectivity() async {
+    final connectivity = await Connectivity().checkConnectivity();
+    return connectivity != ConnectivityResult.none;
+  }  //funcion de conctividad true o false
+
   Future<void> cargarCiudadYSerie() async {
-    final ciudadSnap =
-        await FirebaseFirestore.instance
+    final hayConexion = await hasConectivity();
+    final boxCiudades = Hive.box('offline_ciudades');
+    final boxSeries = Hive.box('offline_series');
+
+    if (hayConexion) {
+      try {
+        final ciudadSnap = await FirebaseFirestore.instance
             .collection('ciudades')
             .doc(widget.ciudadId)
             .get();
 
-    final serieSnap =
-        await FirebaseFirestore.instance
+        final serieSnap = await FirebaseFirestore.instance
             .collection('ciudades')
             .doc(widget.ciudadId)
             .collection('series')
             .doc(widget.serieId)
             .get();
 
-    setState(() {
-      ciudad = ciudadSnap.data();
-      serie = serieSnap.data();
-    });
+        final ciudadData = ciudadSnap.data();
+        final serieData = serieSnap.data();
+
+        if (ciudadData != null && serieData != null) {
+          setState(() {
+            ciudad = ciudadData;
+            serie = serieData;
+          });
+
+          // 🧠 Guarda como respaldo offline
+          final ciudadList = boxCiudades.get('ciudades') ?? [];
+          final seriesList = boxSeries.get('series_${widget.ciudadId}') ?? [];
+
+          // Actualiza lista de ciudades si no existe aún
+          if (!(ciudadList as List).any((c) => c['id'] == widget.ciudadId)) {
+            await boxCiudades.put('ciudades', [...ciudadList, {...ciudadData, 'id': widget.ciudadId}]);
+          }
+
+          // Actualiza lista de series si no existe aún
+          if (!(seriesList as List).any((s) => s['id'] == widget.serieId)) {
+            await boxSeries.put('series_${widget.ciudadId}', [...seriesList, {...serieData, 'id': widget.serieId}]);
+          }
+
+          print("✅ Ciudad y serie cargadas ONLINE y respaldadas en Hive.");
+          return;
+        }
+      } catch (e) {
+        print("❌ Error al cargar ciudad/serie desde Firestore: $e");
+      }
+    }
+
+    // 📴 MODO OFFLINE
+    try {
+      final listaCiudades = boxCiudades.get('ciudades') ?? [];
+      final listaSeries = boxSeries.get('series_${widget.ciudadId}') ?? [];
+
+      //Busca la ciudad y la serie que corresponde dentro de las listas cargadas desde Hive.
+      // Utiliza `.firstWhere()` para encontrar el primer elemento que coincida por id.
+      // Si no encuentra ninguno, devuelve un mapa vacío `{}` para evitar errores por null`
+      // Luego se verifica con isNotEmpty (para validar que no sean datos vacios) antes de usar los datos.
+
+      final ciudadLocal = (listaCiudades as List)
+          .cast<Map>()
+          .firstWhere((c) => c['id'] == widget.ciudadId,
+            orElse: () => <String, dynamic>{});  // si no lo encuentra devolvera un map vacio
+
+      final serieLocal = (listaSeries as List)
+          .cast<Map>()
+          .firstWhere((s) => s['id'] == widget.serieId,
+            orElse: () => <String, dynamic>{});
+
+      if (ciudadLocal.isNotEmpty && serieLocal.isNotEmpty) {
+        setState(() {
+          ciudad = Map<String, dynamic>.from(ciudadLocal);
+          serie = Map<String, dynamic>.from(serieLocal);
+        });
+
+        print("✅ Ciudad y serie cargadas OFFLINE desde Hive.");
+      } else {
+        print("⚠️ Ciudad o serie no encontradas en Hive.");
+      }
+    } catch (e) {
+      print("❌ Error al cargar ciudad/serie desde Hive: $e");
+    }
   }
 
   Future<void> cargarNombresBloques() async {
-    final bloquesSnapshot =
-        await FirebaseFirestore.instance
+    final boxBloques = Hive.box('offline_bloques');
+    final nombres = <String, String>{};
+
+    final hayConexion = await hasConectivity(); //valida si hay conexión
+
+    if (hayConexion) {
+      try {
+        final bloquesSnapshot = await FirebaseFirestore.instance
             .collection('ciudades')
             .doc(widget.ciudadId)
             .collection('series')
@@ -98,10 +175,46 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
             .collection('bloques')
             .get();
 
-    setState(() {
-      for (final doc in bloquesSnapshot.docs) {
-        nombresBloques[doc.id] = doc['nombre'];
+        for (final doc in bloquesSnapshot.docs) {  //carga desde firestore para luego guardar en hive
+          final bloqueId = doc.id;
+          final nombre = doc['nombre'];
+
+          nombres[bloqueId] = nombre;
+
+          // Guardar en Hive
+          final clave = '${widget.ciudadId}_${widget.serieId}_$bloqueId';
+          final data = {
+            ...doc.data(),
+            'ciudadId': widget.ciudadId,
+            'serieId': widget.serieId,
+            'bloqueId': bloqueId,
+          };
+          await boxBloques.put(clave, data);
+        }
+
+        print('Bloques cargados online y guardados en Hive');
+      } catch (e) {
+        print("Error al cargar bloques desde Firestore: $e");
       }
+    } else {
+
+      final allKeys = boxBloques.keys      //Cargar desde Hive si no hay
+          .where((key) => key.toString().startsWith('${widget.ciudadId}_${widget.serieId}_'));
+
+      //Si no hay conexión: Buscamos en Hive todos los bloques que correspondan a la ciudad y serie actual.
+      // Usamos las claves para filtrar y obtener solo los bloques relacionados.
+      for (final key in allKeys) {
+        final data = boxBloques.get(key);
+        if (data != null && data['bloqueId'] != null && data['nombre'] != null) {
+          nombres[data['bloqueId']] = data['nombre'];
+        }
+      }
+
+      print('📴 Bloques cargados desde Hive en modo offline');
+    }
+
+    setState(() {   //aplica el estado dependiendo si conexion es true o false
+      nombresBloques = nombres;
     });
   }
 
@@ -139,7 +252,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } else {
       debugPrint('⚠️ No se pudo cargar la parcela (ni online ni offline).');
     }
-  }
+  }   //pendiente
 
   Future<void> agregarEvaluacion(int nota) async {
     final cantidad = int.tryParse(cantidadController.text.trim());
@@ -162,7 +275,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
 
     // 🔊 Feedback sonoro
     await player.play(AssetSource('sounds/beep.mp3'));
-  }
+  }  //pendiente
 
   void borrarUltimo() {
     if (historialEvaluaciones.isNotEmpty) {
@@ -177,14 +290,14 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
         }
       });
     }
-  }
+  }   //pendiente
 
   void reiniciarEvaluacion() {
     setState(() {
       evaluaciones.clear();
       mensaje = '';
     });
-  }
+  }   //pendiente
 
   Future<void> guardarEvaluacion() async {
     try {
@@ -244,9 +357,9 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } catch (e) {
       setState(() => mensaje = "❌ Error al guardar: $e");
     }
-  }
+  }   //pendiente
 
-  Future<void> cargarEvaluacion() async {
+  Future<void> cargarEvaluacion() async {    //pendiente
     try {
       Map<String, dynamic>? data;
 
@@ -268,7 +381,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } catch (e) {
       setState(() => mensaje = "❌ Error al cargar evaluación: $e");
     }
-  }
+  }   //pendiente
 
   String _obtenerNombreBloque() {
     try {
@@ -285,7 +398,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
       return '';
     }
     return '';
-  }
+  }  //pendiente
 
   void _confirmarAvance() {
     final int totalEvaluadas = evaluaciones.values.fold(0, (a, b) => a + b);
@@ -340,7 +453,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
             ],
           ),
     );
-  }
+  }  //pendiente
 
   void _confirmarReinicio() {
     showDialog(
@@ -364,7 +477,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
             ],
           ),
     );
-  }
+  }   //pendiente
 
   Widget build(BuildContext context) {
     int totalRaices = evaluaciones.values.fold(0, (a, b) => a + b);
@@ -663,5 +776,5 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
         ),
       ),
     );
-  }
+  }   //pendiente
 }
