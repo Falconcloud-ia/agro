@@ -684,7 +684,12 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
               ...Map<String, dynamic>.from(data), // ✅ Conversión explícita
               'bloque': data['bloque'] ?? widget.bloqueId,
             };
-          }).toList();
+          }).toList()
+            ..sort((a, b) {
+              final aNum = int.tryParse(a['numero_ficha']?.toString() ?? '') ?? 0;
+              final bNum = int.tryParse(b['numero_ficha']?.toString() ?? '') ?? 0;
+              return aNum.compareTo(bNum);
+            });;
 
       todasParcelas = parcelasOffline;
 

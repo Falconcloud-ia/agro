@@ -40,7 +40,7 @@ class _HiveViewerScreenState extends State<HiveViewerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hive Viewer'),
-        backgroundColor: const Color(0xFF005A56),
+        backgroundColor: const Color(0xFFB2F3DD),
       ),
       body: Column(
         children: [
