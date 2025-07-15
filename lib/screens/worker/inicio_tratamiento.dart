@@ -86,18 +86,24 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
     }
 
     final serieData = box.get(key) ?? [];
-    final serieSuperficie = {...serieData, 'superficie': superficie, 'flag_sync': !persistioEnFirestore};
-    await box.put(key, serieSuperficie);
+    if(!serieData.isEmpty) {
+      final serieSuperficie = {
+        ...serieData,
+        'superficie': superficie,
+        'flag_sync': !persistioEnFirestore
+      };
+      await box.put(key, serieSuperficie);
 
-    if(!persistioEnFirestore){
-      //updateSyncLocal(true);
-      void updateSyncLocal() {
-        //-traer box
-        //-actualizar atributo hasDataToSync = true;
+      if (!persistioEnFirestore) {
+        //updateSyncLocal(true);
+        void updateSyncLocal() {
+          //-traer box
+          //-actualizar atributo hasDataToSync = true;
+        }
       }
+      print("📦 Superficie guardada en Hive con flag_sync: " +
+          '${!persistioEnFirestore}');
     }
-    print("📦 Superficie guardada en Hive con flag_sync: " + '${!persistioEnFirestore}' );
-
   }
 
   Future<void> cargarCiudades() async {
