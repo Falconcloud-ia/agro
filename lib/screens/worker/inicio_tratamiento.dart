@@ -236,7 +236,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final hayConexion =
         (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
-    final key ='parcelas_${ciudadSeleccionada}_${serieSeleccionada}_$bloqueSeleccionado';
 
     if (hayConexion) {
       final snapshot =
@@ -264,22 +263,28 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
       final allKeys = _parcelasBox.keys;
       final matchingKeys = allKeys.where((k) => k.startsWith(keyPrefix));
 
-      //TODO: Order by numero
-      final list =
-          matchingKeys.map((k) {
-            final data = _parcelasBox.get(k);
-            return {
-              'id': k.split('_').last,
-              'numero': data['numero'],
-              'numero_tratamiento': data['numero_tratamiento'],
-              'numero_ficha': data['numero_ficha'],
-            };
-          }).toList()
-            ..sort((a, b) {
-              final aNum = int.tryParse(a['numero'].toString()) ?? 0;
-              final bNum = int.tryParse(b['numero'].toString()) ?? 0;
-              return (aNum as int).compareTo(bNum as int);
-            });;
+      final list = matchingKeys.map((k) {
+        final data = _parcelasBox.get(k);
+        return {
+          'id': k.split('_').last,
+          'bloqueId': k.split('_')[2], // Asumiendo estructura ciudad_serie_bloque_parcela
+          'numero': data['numero'],
+          'numero_tratamiento': data['numero_tratamiento'],
+          'numero_ficha': data['numero_ficha'],
+        };
+      }).toList()
+        ..sort((a, b) {
+          // Primero ordenamos por bloqueId (string)
+          final bloqueComp = (a['bloqueId'] ?? '').compareTo(b['bloqueId'] ?? '');
+          if (bloqueComp != 0) return bloqueComp;
+
+          // Luego por número (entero)
+          final aNum = int.tryParse(a['numero']?.toString() ?? '') ?? 0;
+          final bNum = int.tryParse(b['numero']?.toString() ?? '') ?? 0;
+          return aNum.compareTo(bNum);
+        });
+
+
 
       setState(() => parcelas = list);
     }
