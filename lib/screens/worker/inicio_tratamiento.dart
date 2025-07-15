@@ -96,7 +96,7 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
         //-actualizar atributo hasDataToSync = true;
       }
     }
-    print("📦 Superficie guardada en Hive offline.");
+    print("📦 Superficie guardada en Hive con flag_sync: " + '${!persistioEnFirestore}' );
 
   }
 
@@ -127,35 +127,34 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final connectivity = await Connectivity().checkConnectivity();
     final hayConexion = connectivity != ConnectivityResult.none;
-    final box = hive.box('offline_series');
 
     if (hayConexion) {
-      final doc =
-          await FirebaseFirestore.instance
-              .collection('ciudades')
-              .doc(ciudadSeleccionada!)
-              .collection('series')
-              .doc(serieSeleccionada!)
-              .get();
+      final doc = await FirebaseFirestore.instance
+          .collection('ciudades')
+          .doc(ciudadSeleccionada!)
+          .collection('series')
+          .doc(serieSeleccionada!)
+          .get();
 
       final data = doc.data();
       if (data != null && data.containsKey('superficie')) {
-        final superficie = data['superficie'].toString();
-        superficieController.text = superficie;
-
+        superficieController.text = data['superficie'].toString();
       } else {
         superficieController.text = '10';
       }
     } else {
-      // 🔄 Lee desde Hive
-      final lista = box.get('series_$ciudadSeleccionada') ?? [];
-      final serie = (lista as List).firstWhere(
-        (e) => e['id'] == serieSeleccionada,
-        orElse: () => {},
-      );
-      superficieController.text = serie['superficie']?.toString() ?? '10';
+      final box = hive.box('offline_series');
+      final key = '${ciudadSeleccionada}_$serieSeleccionada';
+      final serieData = box.get(key);
+
+      if (serieData != null && serieData is Map && serieData.containsKey('superficie')) {
+        superficieController.text = serieData['superficie']?.toString() ?? '10';
+      } else {
+        superficieController.text = '10';
+      }
     }
   }
+
 
   Future<void> cargarSeries() async {
     if (ciudadSeleccionada == null) return;
@@ -284,8 +283,6 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
           return aNum.compareTo(bNum);
         });
 
-
-
       setState(() => parcelas = list);
     }
   }
@@ -396,15 +393,13 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
   Future<void> generarNumerosFicha(int numeroInicial) async {
     int contador = numeroInicial;
-    bool isCloudPersistence = true;
+    bool isCloudPersistence = false;
 
-    //TODO: usar función modular hasConectivity
-    //--agregar bool isCloudPersistence para indicar si se debe sincronizar
+    final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
 
-final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
     if (hayConexion) {
-    final bloquesSnapshot =
-        await FirebaseFirestore.instance
+      try {
+        final bloquesSnapshot = await FirebaseFirestore.instance
             .collection('ciudades')
             .doc(ciudadSeleccionada!)
             .collection('series')
@@ -413,26 +408,49 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
             .orderBy(FieldPath.documentId)
             .get();
 
-    for (var bloqueDoc in bloquesSnapshot.docs) {
-      final parcelasSnapshot =
-          await bloqueDoc.reference
+        for (var bloqueDoc in bloquesSnapshot.docs) {
+          final parcelasSnapshot = await bloqueDoc.reference
               .collection('parcelas')
               .orderBy('numero')
               .get();
 
-      //TODO : agregar isCloudPersistence[cont]
-      for (var parcelaDoc in parcelasSnapshot.docs) {
-        await parcelaDoc.reference.update({'numero_ficha': contador});
-        contador++;
-      }
-      isCloudPersistence = true;
-    }
+          for (var parcelaDoc in parcelasSnapshot.docs) {
+            // 🔁 Actualizar en Firestore
+            try {
+              await parcelaDoc.reference.update({'numero_ficha': contador});
+              isCloudPersistence = true;
+            } catch (e) {
+              print('❌ Error al actualizar numero_ficha: $e');
+            }
 
-    }else{
+            // 📦 También actualizar en Hive
+            final bloqueId = bloqueDoc.id;
+            final parcelaId = parcelaDoc.id;
+            final keyHive = '${ciudadSeleccionada}_${serieSeleccionada}_${bloqueId}_$parcelaId';
+            final dataLocal = _parcelasBox.get(keyHive) ?? {};
+
+            final updatedData = Map<String, dynamic>.from(dataLocal);
+            updatedData['numero_ficha'] = contador;
+            updatedData['flag_sync'] = !isCloudPersistence;
+            await _parcelasBox.put(keyHive, updatedData);
+            contador++;
+            isCloudPersistence = false;
+
+          }
+        }
+
+      } catch (e) {
+        print("❌ Error al guardar en Firestore: $e");
+        isCloudPersistence = false; // por si falla durante ejecución
+      }
+    }else {
+      // 🔁 Siempre actualizar Hive (también si no hay conexión)
       final bloquesKeys = _bloquesBox.keys
-          .where((k) => k.contains('${ciudadSeleccionada}_${serieSeleccionada}_'))
+          .where((k) =>
+          k.contains('${ciudadSeleccionada}_${serieSeleccionada}_'))
           .toList()
-        ..sort(); // orden por clave (similar al orderBy documentId) //TODO: validar ordenamiento
+        ..sort(); // Asegura orden
+      contador = numeroInicial;
 
       for (final bloqueKey in bloquesKeys) {
         final bloqueData = _bloquesBox.get(bloqueKey);
@@ -453,30 +471,24 @@ final hayConexion = (await Connectivity().checkConnectivity()) != ConnectivityRe
         }).toList()
           ..sort((a, b) => a['numero'].compareTo(b['numero']));
 
-        for (final parcela in parcelaList) {
-          final updatedData = Map<String, dynamic>.from(parcela['data']);
-          updatedData['numero_ficha'] = contador;
-          updatedData['flag_sync'] = isCloudPersistence; // asegura que las parcelas actualizadas queden con su numero de ficha
-          //Y sean detectadas luego por el servicio sync2 cuando haya conexión para ser subidas a Firestore.
-
-          await HiveSyncUtils.marcarComoModificadoSoloOffline(_parcelasBox, parcela['key'], updatedData);
-          contador++;
-        }
-      }
-
-      if(!isCloudPersistence){
-        //updateSyncLocal(true);
-        void updateSyncLocal() {
-          //-traer box
-          //-actualizar atributo hasDataToSync = true;
+        // Si ya se procesó online, evitamos doble asignación
+        if (!isCloudPersistence) {
+          for (final parcela in parcelaList) {
+            final updatedData = Map<String, dynamic>.from(parcela['data']);
+            updatedData['numero_ficha'] = contador;
+            updatedData['flag_sync'] = true; // pendiente de subir
+            await _parcelasBox.put(parcela['key'], updatedData);
+            contador++;
+          }
         }
       }
     }
 
     await cargarParcelas(); // Refresca UI
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("✅ Números de ficha generados offline exitosamente"),
+        content: Text("✅ Números de ficha generados correctamente."),
       ),
     );
   }

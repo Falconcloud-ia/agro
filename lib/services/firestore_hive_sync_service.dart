@@ -9,7 +9,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
       final ciudades = await firestore.collection('ciudades').get();
 
       for (final ciudad in ciudades.docs) {
-        if(ciudad.id == "BmIlf5xJzTOjsI5BTt0i") {
+       if(ciudad.id == "fOcyV8sFs274lNxU17Ov") {
           await _resguardarCiudad(ciudad);
         }
       }
@@ -24,7 +24,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
     final ciudadId = doc.id;
     final data = convertTimestamps(doc.data());
 
-    await ciudadesBox.put(ciudadId, {...data, 'flag_sync': false});
+    await ciudadesBox.put(ciudadId, {...data});
     print('🌆 Ciudad guardada: $ciudadId');
 
     final series = await doc.reference.collection('series').get();
@@ -81,6 +81,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
       'ciudadId': ciudadId,
       'serieId': serieId,
       'bloqueId': bloqueId,
+      'parcelaId': parcelaId,
       'flag_sync': false,
     };
     await parcelasBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', data);
@@ -93,6 +94,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
         'serieId': serieId,
         'bloqueId': bloqueId,
         'parcelaId': parcelaId,
+        'tratamientoId': tr.id,
         'flag_sync': false,
       };
       await tratamientosBox.put('${ciudadId}_${serieId}_${bloqueId}_$parcelaId', trData);
