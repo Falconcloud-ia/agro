@@ -81,9 +81,9 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       final ciudadId = data['ciudadId'];
       final serieId = data['serieId'];
       final bloqueId = data['bloqueId'];
-
       final parcelaId = data['parcelaId'];
       if ([ciudadId, serieId, bloqueId, parcelaId].contains(null)) continue;
+
       final filtered = {...data}..remove('flag_sync');
 
       try {

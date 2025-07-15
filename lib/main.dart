@@ -1,4 +1,4 @@
-//import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:controlgestionagro/screens/setup_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,7 +29,7 @@ void main() async {
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
 
-/*
+
   //Android_alarm
   await AndroidAlarmManager.initialize();
   if (!kIsWeb && Platform.isAndroid) {
@@ -41,9 +41,6 @@ void main() async {
     //Agregar tiempo
     await AndroidAlarmManager.periodic(const Duration(minutes: 2), 0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
   }
-
- */
-
 
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
