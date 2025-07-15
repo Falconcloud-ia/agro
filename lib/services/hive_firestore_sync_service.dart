@@ -76,14 +76,14 @@ class HiveToFirestoreSyncService extends BaseSyncService {
   Future<void> _syncParcelas() async {
     for (final key in parcelasBox.keys) {
       final data = Map<String, dynamic>.from(parcelasBox.get(key));
-      if (data['flag_sync'] != true) continue; //sale del metodo
+      if (data['flag_sync'] != true) continue;
 
       final ciudadId = data['ciudadId'];
       final serieId = data['serieId'];
       final bloqueId = data['bloqueId'];
+
       final parcelaId = data['parcelaId'];
       if ([ciudadId, serieId, bloqueId, parcelaId].contains(null)) continue;
-
       final filtered = {...data}..remove('flag_sync');
 
       try {

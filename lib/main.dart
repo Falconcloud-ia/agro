@@ -45,6 +45,7 @@ void main() async {
  */
 
 
+
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');
   final currentUser = FirebaseAuth.instance.currentUser;
