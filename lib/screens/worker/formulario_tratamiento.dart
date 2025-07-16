@@ -266,7 +266,7 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
       return;
     }
 
-    final String key = 'tratamiento_${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
+    final String key = '${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
     print("🔐 Clave generada para guardar tratamiento: $key");
     Map<String, dynamic> tratamientoPrevio = {};
     bool persistioEnFirestore = false;
@@ -381,7 +381,7 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     }
 
     // Se genera la clave para identificar el tratamiento en Hive
-    final String key = 'tratamiento_${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
+    final String key = '${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
     print("Clave generada para tratamiento: $key");
 
     final hayConexion = await hasConectivity();
