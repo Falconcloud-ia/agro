@@ -83,7 +83,7 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       final parcelaId = data['parcelaId'];
       if ([ciudadId, serieId, bloqueId, parcelaId].contains(null)) continue;
 
-      if (data['flag_sync'] != true) {
+      if ((data['flag_sync'] ?? false) != true) {
         final filtered = {...data}..remove('flag_sync');
         try {
           final docRef = FirebaseFirestore.instance
@@ -106,9 +106,10 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       final String trKey = '${ciudadId}_${serieId}_${bloqueId}_$parcelaId';
       final tratamientoHive = tratamientosBox.get(trKey);
 
-      if (tratamientoHive) {
+      if (tratamientoHive != null) {
         final tratamientoMap = Map<String, dynamic>.from(tratamientoHive ?? {});
-        if (tratamientoMap['flag_sync'] != true) continue;
+        if ((tratamientoMap['flag_sync'] ?? false) != true) continue;
+
         final filteredTratamiento = {...tratamientoMap}..remove('flag_sync');
 
         try {
