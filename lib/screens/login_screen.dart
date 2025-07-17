@@ -16,6 +16,7 @@ import 'package:controlgestionagro/models/users_local.dart';
 import 'package:controlgestionagro/services/firestore_hive_sync_service.dart';
 import 'package:controlgestionagro/screens/hive_viewer_screen.dart';
 import '../../services/hive_firestore_sync_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -300,11 +301,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF005A56),
+        backgroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
-        title: Image.asset('assets/images/iansa_logo.png', height: 40),
-      ),
+        title: Image.asset(
+        'assets/images/iansa_logo.png',
+        height: 150,
+        fit: BoxFit.contain,
+        ),
+          ),
+
+
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),

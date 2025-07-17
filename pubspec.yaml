@@ -50,6 +50,7 @@ dependencies:
   share_plus: ^7.2.1
   pdf: ^3.10.4
   excel: ^2.1.0
+  flutter_svg: ^2.0.7
 
   android_alarm_manager_plus: ^4.0.7
   #Android networking validation ANV
@@ -58,7 +59,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -71,6 +71,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
