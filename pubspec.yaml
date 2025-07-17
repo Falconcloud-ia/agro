@@ -83,7 +83,7 @@ flutter:
       - assets/sounds/beep.mp3
       - assets/sounds/done.mp3
       - assets/sounds/save.mp3
-      - assets/images/iansa_logo.jpeg
+      - assets/images/iansa_logo.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
