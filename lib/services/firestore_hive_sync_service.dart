@@ -9,9 +9,7 @@ class FirestoreToHiveSyncService extends BaseSyncService {
       final ciudades = await firestore.collection('ciudades').get();
 
       for (final ciudad in ciudades.docs) {
-       if(ciudad.id == "ZQCCYysjEPj3XTPnwgqg" || ciudad.id == "GyzcbOvCN8t4keq1K6Dr") {
-          await _resguardarCiudad(ciudad);
-        }
+        await _resguardarCiudad(ciudad);
       }
 
       print('✅ Sincronización completa');
