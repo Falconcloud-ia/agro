@@ -286,6 +286,9 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
           print(
             "📦 Tratamiento previo obtenido desde Hive: $tratamientoPrevio",
           );
+        }else{
+          tratamientoPrevio = <String, dynamic>{};
+          print("📦 No se encontró tratamiento previo en Hive. Se usará uno vacío.");
         }
       }
     } catch (e) {
