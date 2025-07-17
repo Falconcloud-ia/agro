@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: const Color(0xFF005A56),
         centerTitle: true,
         elevation: 0,
-        title: Image.asset('assets/images/iansa_logo.jpeg', height: 40),
+        title: Image.asset('assets/images/iansa_logo.png', height: 40),
       ),
       body: Center(
         child: SingleChildScrollView(

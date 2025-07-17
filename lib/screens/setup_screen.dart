@@ -85,7 +85,7 @@ class _SetupScreenState extends State<SetupScreen> {
         backgroundColor: const Color(0xFF005A56), // Azul petróleo IANSA
         centerTitle: true,
         elevation: 0,
-        title: Image.asset('assets/images/iansa_logo.jpeg', height: 40),
+        title: Image.asset('assets/images/iansa_logo.png', height: 40),
       ),
       body: Center(
         child: SingleChildScrollView(
