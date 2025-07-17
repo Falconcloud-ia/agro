@@ -10,7 +10,7 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       await _syncSeries();
       await _syncBloques();
       await _syncParcelas();
-      await _syncTratamientos();
+      //await _syncTratamientos();
 
       print('✅ Subida de datos completa');
     } catch (e) {
@@ -76,7 +76,6 @@ class HiveToFirestoreSyncService extends BaseSyncService {
   Future<void> _syncParcelas() async {
     for (final key in parcelasBox.keys) {
       final data = Map<String, dynamic>.from(parcelasBox.get(key));
-      if (data['flag_sync'] != true) continue;
 
       final ciudadId = data['ciudadId'];
       final serieId = data['serieId'];
@@ -84,27 +83,60 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       final parcelaId = data['parcelaId'];
       if ([ciudadId, serieId, bloqueId, parcelaId].contains(null)) continue;
 
-      final filtered = {...data}..remove('flag_sync');
+      if (data['flag_sync'] != true) {
+        final filtered = {...data}..remove('flag_sync');
+        try {
+          final docRef = FirebaseFirestore.instance
+              .collection('ciudades')
+              .doc(ciudadId)
+              .collection('series')
+              .doc(serieId)
+              .collection('bloques')
+              .doc(bloqueId)
+              .collection('parcelas')
+              .doc(parcelaId);
+          await docRef.set(filtered, SetOptions(merge: true));
 
-      try {
-        final docRef = FirebaseFirestore.instance
-            .collection('ciudades')
-            .doc(ciudadId)
-            .collection('series')
-            .doc(serieId)
-            .collection('bloques')
-            .doc(bloqueId)
-            .collection('parcelas')
-            .doc(parcelaId);
+          print('✅ parcelas/$parcelaId sincronizado');
+        } catch (e) {
+          print('❌ Error subiendo parcelas/$parcelaId → $e');
+        }
+      }
 
-        await docRef.set(filtered, SetOptions(merge: true));
-        print('✅ parcelas/$parcelaId sincronizado');
-      } catch (e) {
-        print('❌ Error subiendo parcelas/$parcelaId → $e');
+      final String trKey = '${ciudadId}_${serieId}_${bloqueId}_$parcelaId';
+      final tratamientoHive = tratamientosBox.get(trKey);
+
+      if (tratamientoHive) {
+        final tratamientoMap = Map<String, dynamic>.from(tratamientoHive ?? {});
+        if (tratamientoMap['flag_sync'] != true) continue;
+        final filteredTratamiento = {...tratamientoMap}..remove('flag_sync');
+
+        try {
+          final docTrRef = FirebaseFirestore.instance
+              .collection('ciudades')
+              .doc(ciudadId)
+              .collection('series')
+              .doc(serieId)
+              .collection('bloques')
+              .doc(bloqueId)
+              .collection('parcelas')
+              .doc(parcelaId)
+              .collection('tratamientos')
+              .doc('actual');
+
+          await docTrRef.set(filteredTratamiento, SetOptions(merge: true));
+
+          final idTratamiento= tratamientoMap['tratamientoId'];
+          print('✅ parcelas/$parcelaId con tratamiento $idTratamiento tratamiento sincronizado');
+        } catch (e) {
+          print('❌ Error subiendo parcelas/$parcelaId → $e');
+        }
       }
     }
   }
+}
 
+/*
   Future<void> _syncTratamientos() async {
     for (final key in tratamientosBox.keys) {
       final data = Map<String, dynamic>.from(tratamientosBox.get(key));
@@ -146,4 +178,5 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       }
     }
   }
-}
+
+   */}
