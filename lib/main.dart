@@ -35,7 +35,7 @@ void main() async {
   Workmanager().registerPeriodicTask(
     "periodicSyncTask",       // ID único
     "backgroundSync",         // Nombre de la tarea (match con el `task` que recibes)
-    frequency: Duration(hours: 1),  // mínimo 15 minutos en Android
+    frequency: Duration(minutes: 15),  // mínimo 15 minutos en Android
     initialDelay: Duration(seconds: 0), // opcional: para evitar que corra de inmediato
     constraints: Constraints(
       networkType: NetworkType.connected,
