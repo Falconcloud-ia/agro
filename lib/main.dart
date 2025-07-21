@@ -1,4 +1,4 @@
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+//import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:controlgestionagro/screens/setup_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,6 +14,7 @@ import 'screens/login_screen.dart';
 import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:workmanager/workmanager.dart';
 
 
 void main() async {
@@ -29,7 +30,23 @@ void main() async {
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
 
+  Workmanager().initialize(backgroundCallbackDispatcher, isInDebugMode: true);
 
+  Workmanager().registerPeriodicTask(
+    "periodicSyncTask",       // ID único
+    "backgroundSync",         // Nombre de la tarea (match con el `task` que recibes)
+    frequency: Duration(hours: 1),  // mínimo 15 minutos en Android
+    initialDelay: Duration(seconds: 0), // opcional: para evitar que corra de inmediato
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+      requiresBatteryNotLow: false,
+      requiresCharging: false,
+    ),
+    backoffPolicy: BackoffPolicy.exponential,
+    backoffPolicyDelay: Duration(minutes: 10),
+  );
+
+/*
   //Android_alarm
   await AndroidAlarmManager.initialize();
   if (!kIsWeb && Platform.isAndroid) {
@@ -39,9 +56,9 @@ void main() async {
     //wakeup: true, // despierta el dispositivo si está dormido
     await AndroidAlarmManager.oneShot(const Duration(seconds: 1),0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
     //Agregar tiempo
-    await AndroidAlarmManager.periodic(const Duration(minutes: 2), 0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
+    await AndroidAlarmManager.periodic(const Duration(minutes: 15), 0, backgroundCallbackDispatcher, exact: true, wakeup: true,);
   }
-
+ */
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');

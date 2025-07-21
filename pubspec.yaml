@@ -50,8 +50,9 @@ dependencies:
   share_plus: ^7.2.1
   pdf: ^3.10.4
   excel: ^2.1.0
+  workmanager: ^0.8.0
 
-  android_alarm_manager_plus: ^4.0.7
+  #android_alarm_manager_plus: ^4.0.7
   #Android networking validation ANV
   #network_type_reachability: ^1.0.3
 
