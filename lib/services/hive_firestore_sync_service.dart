@@ -83,7 +83,8 @@ class HiveToFirestoreSyncService extends BaseSyncService {
       final parcelaId = data['parcelaId'];
       if ([ciudadId, serieId, bloqueId, parcelaId].contains(null)) continue;
 
-      if ((data['flag_sync'] ?? false) != true) {
+      // Subir datos de la parcela si tienen flag_sync = true
+      if ((data['flag_sync'] ?? false) == true) {
         final filtered = {...data}..remove('flag_sync');
         try {
           final docRef = FirebaseFirestore.instance
@@ -103,14 +104,21 @@ class HiveToFirestoreSyncService extends BaseSyncService {
         }
       }
 
+      // 🔁 Subir tratamiento si existe y tiene flag_sync = true
       final String trKey = '${ciudadId}_${serieId}_${bloqueId}_$parcelaId';
       final tratamientoHive = tratamientosBox.get(trKey);
 
       if (tratamientoHive != null) {
-        final tratamientoMap = Map<String, dynamic>.from(tratamientoHive ?? {});
+        final tratamientoMap = Map<String, dynamic>.from(tratamientoHive);
         if ((tratamientoMap['flag_sync'] ?? false) != true) continue;
 
         final filteredTratamiento = {...tratamientoMap}..remove('flag_sync');
+
+        // 🔧 Agregar numero_ficha desde la parcela si existe
+        if (data.containsKey('numero_ficha')) {
+          filteredTratamiento['numero_ficha'] = data['numero_ficha'];
+          print('📤 Subiendo numero_ficha=${data['numero_ficha']} para parcela $parcelaId');
+        }
 
         try {
           final docTrRef = FirebaseFirestore.instance
@@ -127,10 +135,10 @@ class HiveToFirestoreSyncService extends BaseSyncService {
 
           await docTrRef.set(filteredTratamiento, SetOptions(merge: true));
 
-          final idTratamiento= tratamientoMap['tratamientoId'];
+          final idTratamiento = tratamientoMap['tratamientoId'];
           print('✅ parcelas/$parcelaId con tratamiento $idTratamiento tratamiento sincronizado');
         } catch (e) {
-          print('❌ Error subiendo parcelas/$parcelaId → $e');
+          print('❌ Error subiendo tratamiento de parcela $parcelaId → $e');
         }
       }
     }
