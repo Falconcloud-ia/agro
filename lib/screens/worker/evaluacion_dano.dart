@@ -319,37 +319,49 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
             (key, value) => MapEntry(key.toString(), value),
       );
 
-      if (widget.parcelaRef != null) {
-        //online: actualizar Firestore
-        await widget.parcelaRef!.update({
-          "evaluacion": evaluacionMap,
-          "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
-        });
-      } else if (widget.parcelaLocal != null) {
-        // offline guardar en Hive con flag_sync true
-        final hiveBox = Hive.box('offline_parcelas');
+      bool persistioEnFirestore = false;
+      final online = await hasConectivity();
 
-        final bloqueId = widget.parcelaLocal!['bloqueId'];
-        final parcelaId = widget.parcelaLocal!['id'];
-        final clave = "${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId";
+      try {
+        if (online && widget.parcelaRef != null) {
+          //online: actualizar Firestore
+          await widget.parcelaRef!.update({
+            "evaluacion": evaluacionMap,
+            "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
+          });
+          persistioEnFirestore = true;
+          print("☁️ Tratamiento guardado en Firestore.");
+        }
+      } catch (e) {
+        print("❌ Error al guardar tratamiento en Firestore: $e");
+      }
 
-        final Map<String, dynamic> nuevaParcela = {    //sobre escribir campos
-          ...widget.parcelaLocal!,
-          "evaluacion": evaluacionMap,
+      // Siempre guardará registro en local
+      final parcelaBox = Hive.box('offline_parcelas');
+      final bloqueId = widget.parcelaLocal!['bloqueId'];
+      final parcelaId = widget.parcelaLocal!['parcelaId'];
+      final key = "${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId";
+
+      final data = parcelaBox.get(key);
+      if(data != null){
+        final dataFinal =
+        {...data,
+          'flag_sync': !persistioEnFirestore,
           "frecuencia_relativa": double.parse(frecuencia.toStringAsFixed(3)),
-          "flag_sync": true,
         };
+        dataFinal['evaluacion'] = Map<String, int>.from(evaluacionMap);
 
-        await hiveBox.put(clave, nuevaParcela);
+        await parcelaBox.put(key, dataFinal);
       } else {
         setState(() {
-          mensaje = "❌ No se encontró referencia de parcela para guardar.";
+          mensaje = "❌ No se encontró referencia de parcela en datos locales";
         });
         return;
       }
 
-      await player.play(AssetSource('sounds/done.mp3'));
-
+      if(online) {
+        await player.play(AssetSource('sounds/done.mp3'));
+      }
       setState(() {
         evaluacionGuardada = true;
         mensaje = "✅ Evaluación guardada correctamente";
