@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'base_sync_service.dart';
 
 class FirestoreToHiveSyncService extends BaseSyncService {
@@ -9,11 +8,8 @@ class FirestoreToHiveSyncService extends BaseSyncService {
       final ciudades = await firestore.collection('ciudades').get();
 
       for (final ciudad in ciudades.docs) {
-       if(ciudad.id == "2MX9dnqvw576G2jGd3wY") {
           await _resguardarCiudad(ciudad);
-        }
       }
-
       print('✅ Sincronización completa');
     } catch (e) {
       print('❌ Error general en syncFirestoreToHive: $e');

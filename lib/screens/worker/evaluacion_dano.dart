@@ -39,7 +39,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
   Map<String, dynamic>? parcelaData;
   Map<String, String> nombresBloques = {};
 
-  Map<int, int> evaluaciones = {}; // nota -> cantidad
+  Map<int, int> evaluaciones = {};
   String mensaje = '';
 
   @override
@@ -72,7 +72,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
   Future<bool> hasConectivity() async {
     final connectivity = await Connectivity().checkConnectivity();
     return connectivity != ConnectivityResult.none;
-  }  //funcion de conctividad true o false
+  }
 
   Future<void> cargarCiudadYSerie() async {
     final hayConexion = await hasConectivity();
@@ -252,7 +252,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } else {
       debugPrint('⚠️ No se pudo cargar la parcela (ni online ni offline).');
     }
-  }   //pendiente
+  }
 
   Future<void> agregarEvaluacion(int nota) async {
     final cantidad = int.tryParse(cantidadController.text.trim());
@@ -275,7 +275,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
 
     // 🔊 Feedback sonoro
     await player.play(AssetSource('sounds/beep.mp3'));
-  }  //pendiente
+  }
 
   void borrarUltimo() {
     if (historialEvaluaciones.isNotEmpty) {
@@ -290,14 +290,14 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
         }
       });
     }
-  }   //pendiente
+  }
 
   void reiniciarEvaluacion() {
     setState(() {
       evaluaciones.clear();
       mensaje = '';
     });
-  }   //pendiente
+  }
 
   Future<void> guardarEvaluacion() async {
     try {
@@ -369,7 +369,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } catch (e) {
       setState(() => mensaje = "❌ Error al guardar: $e");
     }
-  }   //pendiente
+  }
 
   Future<void> cargarEvaluacion() async {    //pendiente
     try {
@@ -393,7 +393,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
     } catch (e) {
       setState(() => mensaje = "❌ Error al cargar evaluación: $e");
     }
-  }   //pendiente
+  }
 
   String _obtenerNombreBloque() {
     try {
@@ -410,7 +410,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
       return '';
     }
     return '';
-  }  //pendiente
+  }
 
   void _confirmarAvance() {
     final int totalEvaluadas = evaluaciones.values.fold(0, (a, b) => a + b);
@@ -465,7 +465,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
             ],
           ),
     );
-  }  //pendiente
+  }
 
   void _confirmarReinicio() {
     showDialog(
@@ -489,7 +489,7 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
             ],
           ),
     );
-  }   //pendiente
+  }
 
   Widget build(BuildContext context) {
     int totalRaices = evaluaciones.values.fold(0, (a, b) => a + b);
@@ -788,5 +788,5 @@ class _EvaluacionDanoScreenState extends State<EvaluacionDanoScreen> {
         ),
       ),
     );
-  }   //pendiente
+  }
 }

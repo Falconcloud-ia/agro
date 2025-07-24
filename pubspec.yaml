@@ -52,6 +52,8 @@ dependencies:
   excel: ^2.1.0
   workmanager: ^0.8.0
   flutter_svg: ^2.0.7
+  network_info_plus: ^4.1.0
+
 
   #android_alarm_manager_plus: ^4.0.7
   #Android networking validation ANV

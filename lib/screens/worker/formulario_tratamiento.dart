@@ -342,7 +342,6 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     final parcela = parcelas[currentIndex];
 
     // Obtener ID de la parcela (soporta tanto DocumentSnapshot como mapa local)
-    //agregar validacion para ver si trar los id de la parcela en offline
 
     final String parcelaId;
     try {
@@ -656,6 +655,27 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
   }
 
    */
+  Future<void> _refrescarParcelaDesdeHive() async {
+    if (parcelas.isEmpty || currentIndex >= parcelas.length) return;
+
+    final parcela = parcelas[currentIndex];
+    if (parcela is! Map) return; // Solo aplica a modo offline
+
+    final bloqueId = parcela['bloqueId'] ?? parcela['bloque'];
+    final parcelaId = parcela['parcelaId'];
+    if (bloqueId == null || parcelaId == null) return;
+
+    final key = '${widget.ciudadId}_${widget.serieId}_${bloqueId}_$parcelaId';
+    final box = Hive.box('offline_parcelas');
+    final data = box.get(key);
+
+    if (data != null) {
+      setState(() {
+        parcelas[currentIndex] = Map<String, dynamic>.from(data);
+      });
+      print("🔁 Parcela actual recargada desde Hive: $key");
+    }
+  }
 
   Future<void> cargarTodasLasParcelas() async {
     print("🔍 Iniciando metodo : cargarTodasLasParcelas");
@@ -895,8 +915,6 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
   }
 
   void irAEvaluacionDano() async {
-    print("🔍 Iniciando metodo : limpiarFormulario");
-
     final cantidadA = int.tryParse(raicesAController.text.trim()) ?? 0;
     final cantidadB = int.tryParse(raicesBController.text.trim()) ?? 0;
     final totalRaices = cantidadA + cantidadB;
@@ -907,25 +925,27 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (_) => EvaluacionDanoScreen(
-              totalRaices: totalRaices,
-              ciudadId: widget.ciudadId,
-              serieId: widget.serieId,
-              parcelaRef: isOnline ? parcela.reference : null,
-              parcelaLocal: isOnline ? null : parcela, // <- Hive
-            ),
+        builder: (_) => EvaluacionDanoScreen(
+          totalRaices: totalRaices,
+          ciudadId: widget.ciudadId,
+          serieId: widget.serieId,
+          parcelaRef: isOnline ? parcela.reference : null,
+          parcelaLocal: isOnline ? null : parcela,
+        ),
       ),
     );
 
-    if (resultado == 'guardado' || resultado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Evaluación guardada correctamente'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      setState(() {}); // Opcional: recargar UI
+    if (resultado == 'anterior') {
+      await _refrescarParcelaDesdeHive(); // 👈 para ver los cambios antes de retroceder
+      await anteriorParcela();
+    } else if (resultado == 'siguiente') {
+      await _refrescarParcelaDesdeHive(); // 👈 para ver los cambios antes de avanzar
+      await siguienteParcela();
+    } else {
+      await _refrescarParcelaDesdeHive(); // 👈 para actualizar la vista si solo se guardó
+      setState(() {
+        mensaje = '✅ Evaluación de daño guardada correctamente';
+      });
     }
   }
 
