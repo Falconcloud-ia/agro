@@ -27,7 +27,8 @@ class _TipoConexionScreenState extends State<TipoConexionScreen> {
         if (resultado == ConnectivityResult.none) {
           tipoConexion = "Sin conexión a internet";
         } else {
-          tipoConexion = "Conectado a internet (tipo de red no disponible en navegador)";
+          tipoConexion =
+          "Conectado a internet (tipo de red no disponible en navegador)";
         }
       });
     } else {
@@ -53,11 +54,20 @@ class _TipoConexionScreenState extends State<TipoConexionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Tipo de Conexión")),
+      backgroundColor: Colors.white, // Fondo blanco
+      appBar: AppBar(
+        title: const Text("Tipo de Conexión"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black, // Ícono y título en negro
+        elevation: 0, // Opcional: sin sombra
+      ),
       body: Center(
         child: Text(
           tipoConexion,
-          style: const TextStyle(fontSize: 24),
+          style: const TextStyle(
+            fontSize: 24,
+            color: Colors.black, // Texto negro
+          ),
           textAlign: TextAlign.center,
         ),
       ),

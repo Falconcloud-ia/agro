@@ -837,17 +837,17 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
                                 SizedBox(
                                   width:
                                       MediaQuery.of(context).size.width * 0.85,
-                                  height: 50,
+                                  height: 30,
                                   child: ElevatedButton.icon(
                                     onPressed: mostrarModalGenerarFicha,
                                     icon: const Icon(
                                       Icons.auto_fix_high,
-                                      size: 34,
+                                      size: 20,
                                     ),
                                     label: const Text(
                                       "GENERAR N° FICHA",
                                       style: TextStyle(
-                                        fontSize: 26,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

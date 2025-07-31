@@ -1499,7 +1499,7 @@ class _CustomNDVIPadState extends State<CustomNDVIPad> {
   }
 
   bool _isKeyDisabled(String key) {
-    if (key == 'BORRAR') return false;
+    if (key == '⌫') return false;
     if (current.length >= 4) return true;
     if (key == '.' && current.contains('.')) return true;
     return false;
@@ -1582,7 +1582,7 @@ class _CustomNDVIPadState extends State<CustomNDVIPad> {
       '3',
       '0',
       '.',
-      'BORRAR',
+      '⌫',
     ];
 
     return Container(
@@ -1628,7 +1628,7 @@ class _CustomNDVIPadState extends State<CustomNDVIPad> {
             ),
             itemBuilder: (context, index) {
               bool _isKeyDisabled(String key) {
-                if (key == 'BORRAR') return false;
+                if (key == '⌫') return false;
                 if (current.length >= 4) return true;
                 if (key == '.' && current.contains('.')) return true;
                 return false;
@@ -1639,12 +1639,12 @@ class _CustomNDVIPadState extends State<CustomNDVIPad> {
                 onPressed:
                     _isKeyDisabled(key)
                         ? null
-                        : () => key == 'BORRAR' ? _backspace() : _input(key),
+                        : () => key == '⌫' ? _backspace() : _input(key),
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   foregroundColor:
-                      key == 'BORRAR'
+                      key == '⌫'
                           ? Colors.red
                           : const Color.fromARGB(255, 255, 255, 255),
                   textStyle: const TextStyle(

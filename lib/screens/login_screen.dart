@@ -299,13 +299,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        backgroundColor: Colors.white, // Fondo blanco
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               CircularProgressIndicator(color: Color(0xFF005A56)),
               SizedBox(height: 16),
-              Text("Sincronizando datos...", style: TextStyle(fontSize: 16)),
+              Text(
+                "Sincronizando datos...",
+                style: TextStyle(
+                  fontSize: 25,
+                  color: Colors.black, // Letra negra
+                ),
+              ),
             ],
           ),
         ),
@@ -515,15 +522,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
-              TextButton(
-                onPressed: _mostrarDialogoSincronizacion,
-                child: const Text(
-                  "Iniciar Sincronización",
-                  style: TextStyle(color: Colors.blue),
-                ),
-              ),
 
-              TextButton(
+
+              //boton de uso para desarrolladores
+
+              /*TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -531,21 +534,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
                 child: const Text(
-                  "🧪 Ver datos Hive",
+                  "Ver datos Hive",
                   style: TextStyle(color: Colors.grey),
                 ),
               ),
-
+*/
               TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                  );
-                },
+                onPressed: _mostrarDialogoSincronizacion,
                 child: const Text(
-                  "¿No tienes cuenta? Regístrate aquí",
-                  style: TextStyle(fontSize: 18, color: Colors.black),
+                  "🔄 Iniciar Sincronización",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 18, // Más grande que el valor por defecto (~14)
+                    fontWeight: FontWeight.w500, // Más presencia
+                  ),
                 ),
               ),
 
@@ -565,12 +567,24 @@ class _LoginScreenState extends State<LoginScreen> {
               TextButton(
                 onPressed: _limpiarDatosLocalesHive,
                 child: const Text(
-                  "🧹 Borrar datos Hive",
+                  "🧹 Borrar datos locales",
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                },
+                child: const Text(
+                  "¿No tienes cuenta? Regístrate aquí",
+                  style: TextStyle(fontSize: 14, color: Colors.black),
                 ),
               ),
 
