@@ -1,5 +1,3 @@
-//TODO: Limpiar imports sin uso
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -538,8 +536,12 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
 
     final doc = parcelas.firstWhere((p) => obtenerId(p) == parcelaSeleccionada);
     final numeroTratamiento = obtenerCampo(doc, 'numero_tratamiento');
+    print('numeroTratamiento:''parcela=$numeroTratamiento');
     final numeroFicha = obtenerCampo(doc, 'numero_ficha');
+    print('numeroFicha:''parcela=$numeroFicha');
     final numeroParcela = int.tryParse(obtenerCampo(doc, 'numero')) ?? 0;
+    print('numeroParcela:''parcela=$numeroParcela');
+    print('bloqueSeleccionado:''bloque=$bloqueSeleccionado');
 
     if (numeroTratamiento.isEmpty) {
       showDialog(
@@ -569,7 +571,9 @@ class _InicioTratamientoScreenState extends State<InicioTratamientoScreen> {
             (_) => FormularioTratamiento(
               ciudadId: ciudadSeleccionada!,
               serieId: serieSeleccionada!,
-              bloqueId: bloqueSeleccionado ?? '1',
+              bloqueId: (doc is DocumentSnapshot)
+                  ? doc.reference.parent.parent?.id ?? bloqueSeleccionado ?? '1'
+                  : bloqueSeleccionado ?? '1',
               parcelaDesde: numeroParcela,
               numeroFicha: numeroFicha,
               numeroTratamiento: numeroTratamiento,

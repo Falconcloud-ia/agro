@@ -13,7 +13,7 @@ import 'screens/login_screen.dart';
 import 'package:controlgestionagro/screens/worker/inicio_tratamiento.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:workmanager/workmanager.dart';
+//import 'package:workmanager/workmanager.dart';
 
 
 void main() async {
@@ -29,8 +29,7 @@ void main() async {
   // 🔹 Inicializa Hive usando la nueva configuración centralizada
   await HiveConfig.init();
 
-  Workmanager().initialize(backgroundCallbackDispatcher, isInDebugMode: true);
-
+ /*Workmanager().initialize(backgroundCallbackDispatcher, isInDebugMode: true);
   Workmanager().registerPeriodicTask(
     "periodicSyncTask",       // ID único
     "backgroundSync",         // Nombre de la tarea (match con el `task` que recibes)
@@ -44,7 +43,7 @@ void main() async {
     backoffPolicy: BackoffPolicy.exponential,
     backoffPolicyDelay: Duration(minutes: 10),
   );
-
+*/
 
   // 🔐 Persistencia UID anónimo si es que existe en Auth pero no está en Hive
   final userBox = Hive.box('offline_user');

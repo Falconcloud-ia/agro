@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:controlgestionagro/screens/TipoConexionScreen.dart';
 
 import 'register_screen.dart';
 import 'setup_screen.dart';
@@ -280,7 +281,20 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => errorMessage = "❌ No se pudo enviar el correo.");
     }
   }
+  Future<void> _limpiarDatosLocalesHive() async {
+    await Hive.box('offline_ciudades').clear();
+    await Hive.box('offline_series').clear();
+    await Hive.box('offline_bloques').clear();
+    await Hive.box('offline_parcelas').clear();
+    await Hive.box('offline_tratamientos').clear();
+    await Hive.box('offline_evaluaciones').clear();
 
+    print('✅ Hive limpiado correctamente');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('🧹 Datos locales eliminados')),
+    );
+    setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -300,18 +314,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        centerTitle: true,
-        elevation: 0,
-        title: Image.asset(
-        'assets/images/iansa_logo.png',
-        height: 150,
-        fit: BoxFit.contain,
-        ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70), // 👈 solo un poco más grande que 60
+        child: AppBar(
+          backgroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 0,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8), // 👈 muy suave
+            child: Image.asset(
+              'assets/images/iansaLogo.png',
+              height: 100, // 👈 más que 80-90, menos que 120
+              fit: BoxFit.contain,
+            ),
           ),
-
-
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -530,7 +548,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontSize: 18, color: Colors.black),
                 ),
               ),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TipoConexionScreen()),
+                  );
+                },
+                child: const Text(
+                  "🔎 Ver tipo de conexión",
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+              ),
+
+              TextButton(
+                onPressed: _limpiarDatosLocalesHive,
+                child: const Text(
+                  "🧹 Borrar datos Hive",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
             ],
+
           ),
         ),
       ),

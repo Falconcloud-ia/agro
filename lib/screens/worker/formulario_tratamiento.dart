@@ -763,7 +763,8 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
       }
     }
 
-    // 🔥 Buscamos la parcela inicial según bloque y número
+    // Buscar la parcela inicial según bloque y número
+
     final index = todasParcelas.indexWhere((p) {
       Map<String, dynamic> data;
       String? bloqueId;
@@ -772,12 +773,13 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
         data = p.data() as Map<String, dynamic>;
         bloqueId = p.reference.parent.parent?.id;
       } else {
-        data = Map<String, dynamic>.from(p); // ✅ Conversión explícita
-        bloqueId = data['bloque'];
+        data = Map<String, dynamic>.from(p);
+        bloqueId = data['bloqueId'] ?? data['bloque'];
       }
 
-      final numero = int.tryParse(data['numero']?.toString() ?? '');
-      return bloqueId == widget.bloqueId && numero == widget.parcelaDesde;
+      final numeroTratamiento = int.tryParse(data['numero_tratamiento']?.toString() ?? '');
+      final targetTratamiento = int.tryParse(widget.numeroTratamiento ?? '');
+      return bloqueId == widget.bloqueId && numeroTratamiento == targetTratamiento;
     });
 
     if (index == -1) {
@@ -825,27 +827,28 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
               return Padding(
                 padding: const EdgeInsets.all(4),
                 child:
-                    label == "NDVI"
-                        ? CustomNDVIPad(
-                          initialValue: controller.text,
-                          onChanged: (val) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              setState(() {
-                                controller.text = val;
-                              });
-                            });
-                          },
-                        )
-                        : CustomNumPad(
-                          initialValue: controller.text,
-                          onChanged: (val) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              setState(() {
-                                controller.text = val;
-                              });
-                            });
-                          },
-                        ),
+                label == "NDVI"
+                    ? CustomNDVIPad(
+                  initialValue: controller.text,
+                  onChanged: (val) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() {
+                        controller.text = val;
+                      });
+                    });
+                  },
+                )
+                    : CustomNumPad(
+                  initialValue: controller.text,
+                  permitirDecimales: !(label == "N° Raíces 1" || label == "N° Raíces 2"),
+                  onChanged: (val) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() {
+                        controller.text = val;
+                      });
+                    });
+                  },
+                ),
               );
             },
           );
@@ -1319,11 +1322,13 @@ class _FormularioTratamientoState extends State<FormularioTratamiento> {
 class CustomNumPad extends StatefulWidget {
   final String initialValue;
   final Function(String) onChanged;
+  final bool permitirDecimales; // ✅ nuevo parámetro
 
   const CustomNumPad({
     Key? key,
     required this.initialValue,
     required this.onChanged,
+    this.permitirDecimales = true, // ✅ valor por defecto: permite decimales
   }) : super(key: key);
 
   @override
@@ -1340,9 +1345,25 @@ class _CustomNumPadState extends State<CustomNumPad> {
   }
 
   void _input(String val) {
+    if (val == '.' && !widget.permitirDecimales) return;
+
+    // Solo permitir dígitos o punto
+    if (!RegExp(r'^\d$').hasMatch(val) && val != '.') return;
+
+    if (widget.permitirDecimales) {
+      if (val == '.' && current.contains('.')) return; // No más de un punto
+      if (val == '.' && current.isEmpty) return;       // No punto al inicio
+
+      // Limitar a 2 decimales
+      if (current.contains('.')) {
+        final partes = current.split('.');
+        if (partes.length == 2 && partes[1].length >= 2) return;
+      }
+    }
+
     setState(() {
       current += val;
-      widget.onChanged(current); // Actualiza en tiempo real
+      widget.onChanged(current);
     });
   }
 
@@ -1361,20 +1382,10 @@ class _CustomNumPadState extends State<CustomNumPad> {
 
   @override
   Widget build(BuildContext context) {
-    final keys = [
-      '7',
-      '8',
-      '9',
-      '4',
-      '5',
-      '6',
-      '1',
-      '2',
-      '3',
-      '0',
-      '.',
-      'BORRAR',
-    ];
+    // Mostrar el "." solo si se permiten decimales
+    final keys = widget.permitirDecimales
+        ? ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '.', '⌫']
+        : ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '⌫', ''];
 
     return Container(
       color: Colors.black,
@@ -1412,16 +1423,18 @@ class _CustomNumPadState extends State<CustomNumPad> {
             itemBuilder: (context, index) {
               final key = keys[index];
               return ElevatedButton(
-                onPressed: () {
-                  if (key == 'BORRAR') {
+                onPressed: key.isEmpty
+                    ? null
+                    : () {
+                  if (key == '⌫') {
                     _backspace();
                   } else {
                     _input(key);
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: key == 'BORRAR' ? Colors.red : Colors.black,
+                  backgroundColor: Colors.black, // Fondo negro
+                  foregroundColor: key == '⌫' ? Colors.red : Colors.white, // Números blancos
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),

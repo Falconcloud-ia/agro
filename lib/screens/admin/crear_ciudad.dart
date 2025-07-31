@@ -184,7 +184,7 @@ class _CrearCiudadState extends State<CrearCiudad> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00B140),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     textStyle: const TextStyle(fontSize: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
